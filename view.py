@@ -1,12 +1,15 @@
+#dataset entry viewer
 import matplotlib.pyplot as plot
 import pandas as pd
 import os
 import sys
 from tornet.data.loader import read_file
 from tornet.display.display import plot_radar, plot_grid
+from dotenv import load_dotenv
+load_dotenv()
 
 #options
-DATASET_PATH = "D:/TorNet_Dataset/dataset"
+DATASET_PATH = os.getenv("DATASET_PATH")
 PLOTS = ["DBZ", "VEL", "RHOHV"]
 
 def get_random_entry(catalogue):
@@ -55,6 +58,3 @@ if __name__ == "__main__":
     change_displayed_info(figure, get_random_entry(catalogue))
 
     plot.show()
-
-
-#plot_grid(nc_file)
