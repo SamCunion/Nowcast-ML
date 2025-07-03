@@ -1,5 +1,5 @@
 import tensorflow_datasets as tfds # need version >= 4.9.3
-import TorCastML_dataset_builder # registers 'tornet'
+import tornet.data.tfds.tornet.tornet_dataset_builder # registers 'tornet'
 from tornet.data.torch.loader import TFDSTornadoDataset
 
 #train/test

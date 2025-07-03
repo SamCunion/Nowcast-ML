@@ -1,3 +1,4 @@
+#Modified dataset builder for use in nowcast ml project
 """tornet dataset."""
 import os
 import pathlib
@@ -30,22 +31,10 @@ class Builder(tfds.core.GeneratorBasedBuilder):
             # These are the features of your dataset like images, labels ...
             'DBZ': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
             'VEL': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'KDP': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
             'RHOHV': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'ZDR': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'WIDTH': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'range_folded_mask': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
             'label': tfds.features.Tensor(shape=(4,),dtype=np.uint8),
             'category': tfds.features.Tensor(shape=(1,),dtype=np.int64),
-            'event_id': tfds.features.Tensor(shape=(1,),dtype=np.int64),
-            'ef_number': tfds.features.Tensor(shape=(1,),dtype=np.int64),
-            'az_lower': tfds.features.Tensor(shape=(1,),dtype=np.float32),
-            'az_upper': tfds.features.Tensor(shape=(1,),dtype=np.float32),
-            'rng_lower': tfds.features.Tensor(shape=(1,),dtype=np.float32),
-            'rng_upper': tfds.features.Tensor(shape=(1,),dtype=np.float32),
-            'time': tfds.features.Tensor(shape=(4,),dtype=np.int64),
-            'tornado_start_time': tfds.features.Tensor(shape=(1,),dtype=np.int64),
-            'tornado_end_time': tfds.features.Tensor(shape=(1,),dtype=np.int64),
+            'ef_number': tfds.features.Tensor(shape=(1,),dtype=np.int64)
         }),
         supervised_keys=None,  # Set to `None` to disable
         homepage='https://github.com/mit-ll/tornet',
