@@ -11,7 +11,7 @@ DATASET_PATH = os.getenv("DATASET_PATH")
 
 print("Loading catalogue...")
 catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
-print("Checking " + str(catalogue.size) + " items")
+print("Checking " + str(catalogue.shape[0]) + " items")
 print("Checking integrity of dataset...")
 
 success = 0
