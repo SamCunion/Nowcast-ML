@@ -1,8 +1,7 @@
 #tornet data builder, converts from slow files to array_record, much faster
 
-import os
 import tensorflow_datasets as tfds
-import tornet.data.tfds.tornet.tornet_dataset_builder
+import TorCastML_dataset_builder
 
 #dataset root file (contains "train" and "test" folders)
 TORNET_ROOT = "/home/sam/Desktop/University Ubuntu Stuff/Project/dataset"
