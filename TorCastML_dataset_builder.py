@@ -1,4 +1,3 @@
-#Modified from TorNet dataset builder
 """tornet dataset."""
 import os
 import pathlib
@@ -11,7 +10,7 @@ from tornet.data.loader import read_file
 
 class Builder(tfds.core.GeneratorBasedBuilder):
   """
-  DatasetBuilder for tornet.
+  DatasetBuilder for tornet.  See README.md in this directory for how to build
   """
 
   VERSION = tfds.core.Version('1.1.0')
