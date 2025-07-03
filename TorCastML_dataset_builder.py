@@ -1,5 +1,5 @@
 #Modified from TorNet dataset builder
-"""TorNet dataset."""
+"""tornet dataset."""
 import os
 import pathlib
 import numpy as np
