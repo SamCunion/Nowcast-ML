@@ -82,9 +82,18 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     catalog = pd.read_csv(catalog_path,parse_dates=['start_time','end_time'])
     catalog = catalog[catalog['type']==data_type]
     catalog = catalog[catalog.end_time.dt.year.isin([year])]
-    catalog = catalog.sample(frac=1,random_state=1234) # shuffle
+    catalog = catalog.sample(frac=1,random_state=3813) # shuffle
     #catalog = catalog.iloc[:10] # testing
 
     for f in catalog.filename:
       # files are relative to dl_manager.manual_dir
-      yield f, read_file(path / ('../../'+f),n_frames=4)
+      file = read_file(path / ('../../'+f),n_frames=4)
+      #only use selected fields
+      yield f, {
+        "DBZ": file["DBZ"],
+        "VEL": file["VEL"],
+        "RHOHV": file["RHOHV"],
+        "label": file["label"],
+        "category": file["category"],
+        "ef_number": file["ef_number"]
+      }
