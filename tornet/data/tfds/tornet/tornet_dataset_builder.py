@@ -29,10 +29,10 @@ class Builder(tfds.core.GeneratorBasedBuilder):
     return self.dataset_info_from_configs(
         features=tfds.features.FeaturesDict({
             # These are the features of your dataset like images, labels ...
-            'DBZ': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'VEL': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'RHOHV': tfds.features.Tensor(shape=(4, 120, 240, 2),dtype=np.float32,encoding='zlib'),
-            'label': tfds.features.Tensor(shape=(4,),dtype=np.uint8),
+            'DBZ': tfds.features.Tensor(shape=(1, 120, 240, 2),dtype=np.float32,encoding='zlib'),
+            'VEL': tfds.features.Tensor(shape=(1, 120, 240, 2),dtype=np.float32,encoding='zlib'),
+            'RHOHV': tfds.features.Tensor(shape=(1, 120, 240, 2),dtype=np.float32,encoding='zlib'),
+            'label': tfds.features.Tensor(shape=(1,),dtype=np.uint8),
             'category': tfds.features.Tensor(shape=(1,),dtype=np.int64),
             'ef_number': tfds.features.Tensor(shape=(1,),dtype=np.int64)
         }),
@@ -87,7 +87,8 @@ class Builder(tfds.core.GeneratorBasedBuilder):
 
     for f in catalog.filename:
       # files are relative to dl_manager.manual_dir
-      file = read_file(path / ('../../'+f),n_frames=4)
+      #CHANGE N_FRAMES FOR MORE FRAMES, MAKE SURE TO UPDATE DIMENSIONS ABOVE
+      file = read_file(path / ('../../'+f),n_frames=1)
       #only use selected fields
       yield f, {
         "DBZ": file["DBZ"],
