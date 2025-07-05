@@ -11,5 +11,5 @@ ds = tfds.data_source('tornet')
 def get_torcast_dataloader(MODE, BATCH_SIZE, WORKERS):
     datasets = [TFDSTornadoDataset(ds["%s-%d" % (MODE, y)]) for y in YEARS]
     dataset = torch.utils.data.ConcatDataset(datasets)
-    torch_dl = torch.utils.data.DataLoader( dataset, batch_size=BATCH_SIZE, num_workers=WORKERS)
+    torch_dl = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE, num_workers=WORKERS)
     return torch_dl
