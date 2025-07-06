@@ -13,7 +13,7 @@ if inp.lower() != "y":
     exit()
 
 #constants
-NUM_EPOCHS = 1
+NUM_EPOCHS = 3
 OUT_PATH = "./saved_models/"
 
 data_loader = get_torcast_dataloader("train", 32, 10)
