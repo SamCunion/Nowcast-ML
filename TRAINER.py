@@ -1,12 +1,20 @@
 #trainer trains the model with training data
 import torch
-import math
+import time
 import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML import TorCastML
 
+#entry
+print("TorCast trainer module")
+print("begin training?")
+inp = input("Y/N: ")
+if inp.lower() != "y":
+    exit()
+
 #constants
 NUM_EPOCHS = 1
+OUT_PATH = "./saved_models/"
 
 data_loader = get_torcast_dataloader("train", 32, 10)
 
@@ -21,19 +29,18 @@ loss_prob = torch.nn.BCELoss()
 loss_classifier = torch.nn.CrossEntropyLoss()
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
+process_start_time = time.time()
 for epoch in range(NUM_EPOCHS):
     print("Starting epoch " + str(epoch) + "/" + str(NUM_EPOCHS) + "...")
     model.train()
-    percent = 0
-    tested = 0
-    total = len(data_loader)
-    x_per_percent = math.floor(total / 100)
+    no_batches = len(data_loader)
+    batches_trained = 0
+    epoch_start_time = time.time()
     for batch in data_loader:
         batch_size = len(batch["label"])
-        if tested % x_per_percent == 0:
-            print("Epoch " + str(percent) + "% complete")
-            percent += 1
-        tested += 1
+        
+        #only use first radar tilt
+        #convert all NaN values to 0
         DBZ = batch["DBZ"][...,0].to(DEVICE)
         DBZ = torch.nan_to_num(DBZ, nan=0.0)
         VEL = batch["VEL"][...,0].to(DEVICE)
@@ -57,3 +64,31 @@ for epoch in range(NUM_EPOCHS):
         overall_loss = prob_loss + class_loss
         overall_loss.backward()
         optimizer.step()
+
+        #update visual
+        batches_trained += 1
+        print("Epoch [" + str(epoch + 1) + "/" + str(NUM_EPOCHS) + "] Batch [" + str(batches_trained) + "/" + str(no_batches) + "] Trained")
+    
+    epoch_end_time = time.time()
+    epoch_duration = epoch_end_time - epoch_start_time
+    print("=====================================")
+    print("Epoch " + str(epoch + 1) + " took " + str(epoch_duration // 3600) + "h, " + str((epoch_duration % 3600) // 60) + "m, " + str(epoch_duration % 60) + "s")
+    if epoch == 0:
+        print("Training should take approximately " + str((epoch_duration * (NUM_EPOCHS - 1)) // 3600) + "h, " + str(((epoch_duration * (NUM_EPOCHS - 1)) % 3600) // 60) + "m, " + str((epoch_duration * (NUM_EPOCHS - 1)) % 60) + "s")
+    print("=====================================")
+
+process_end_time = time.time()
+process_duration = process_end_time - process_start_time
+print("=====================================")
+print("=====================================")
+print("TRAINING PROCESS COMPLETE")
+print("Model training took " + str(process_duration // 3600) + "h, " + str((process_duration % 3600) // 60) + "m, " + str(process_duration % 60) + "s")
+
+print("Save the model?")
+inp = input("Y/N: ")
+if inp.lower() != "y":
+    exit()
+
+inp = input("Model name: ")
+torch.save(model, OUT_PATH + "TorCastML-" + inp + ".pt")
+print("model saved!")
