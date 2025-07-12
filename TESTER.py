@@ -61,6 +61,11 @@ with torch.no_grad():
             vel_data = BATCH_VEL[i] #individual vel input
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
 
+            #is one of the inputs filled with nans? red alert!
+            if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
+                print("BATCH CONTAINED ALL NAN DATA")
+                continue;
+
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)
@@ -88,12 +93,6 @@ with torch.no_grad():
         tor_strength_predictions.extend(batch_strength_predictions)
         tor_strength_truths.extend(ef_number + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
-        print(batch_tor_probs)
-        print(tor_prob_predictions)
-        print(tor_prob_truths)
-        print(tor_strength_predictions)
-        print(tor_strength_truths)
-        exit()
 
         #update visual
         batches_trained += 1

@@ -51,10 +51,16 @@ for epoch in range(NUM_EPOCHS):
         SPLIT_VEL = []
         SPLIT_RHOHV = []
 
+        nan_detected = False
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
             vel_data = BATCH_VEL[i] #individual vel input
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+
+            #is one of the inputs filled with nans? red alert!
+            if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
+                nan_detected = True
+                break;
 
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)
@@ -63,6 +69,10 @@ for epoch in range(NUM_EPOCHS):
             SPLIT_DBZ.append(norm_dbz)
             SPLIT_VEL.append(norm_vel)
             SPLIT_RHOHV.append(norm_rhohv)
+        
+        if (nan_detected): #discard the batch to prevent dirty data
+            print("BATCH CONTAINED ALL NAN DATA!")
+            continue
         
         #merge batch again
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
