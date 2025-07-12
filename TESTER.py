@@ -78,7 +78,7 @@ with torch.no_grad():
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
 
-        batch_tor_probs = prob.cpu().numpy()
+        batch_tor_probs = torch.sigmoid(prob).cpu().numpy()
         batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).astype(int)
         tor_prob_predictions.extend(batch_tor_predictions)
         tor_prob_truths.extend(label.astype(int))
