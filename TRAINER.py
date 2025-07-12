@@ -26,7 +26,7 @@ print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
 
 model = TorCastML().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
-loss_prob = torch.nn.BCEWithLogitsLoss()
+loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
 loss_classifier = torch.nn.CrossEntropyLoss()
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
@@ -101,7 +101,7 @@ for epoch in range(NUM_EPOCHS):
         ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), label)
         class_loss = loss_classifier(class_logits, ef_truths)
-        overall_loss = prob_loss + class_loss
+        overall_loss = (prob_loss * 0.9) + (class_loss * 0.1) #scale depending on what head should influence loss more
         overall_loss.backward()
         optimizer.step()
 
