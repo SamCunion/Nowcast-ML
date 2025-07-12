@@ -4,6 +4,7 @@ import time
 import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML import TorCastML
+from input_preprocessing import normalise_input
 
 #entry
 print("TorCast trainer module")
@@ -25,7 +26,7 @@ print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
 
 model = TorCastML().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
-loss_prob = torch.nn.BCELoss()
+loss_prob = torch.nn.BCEWithLogitsLoss()
 loss_classifier = torch.nn.CrossEntropyLoss()
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
@@ -39,14 +40,37 @@ for epoch in range(NUM_EPOCHS):
     for batch in data_loader:
         batch_size = len(batch["label"])
         
-        #only use first radar tilt
-        #convert all NaN values to 0
-        DBZ = batch["DBZ"][...,0].to(DEVICE)
-        DBZ = torch.nan_to_num(DBZ, nan=0.0)
-        VEL = batch["VEL"][...,0].to(DEVICE)
-        VEL = torch.nan_to_num(VEL, nan=0.0)
-        RHOHV = batch["RHOHV"][...,0].to(DEVICE)
-        RHOHV = torch.nan_to_num(RHOHV, nan=0.0)
+        #only using the first radar tilt for now
+        #PREPROCESSING
+
+        #split batch before processing
+        BATCH_DBZ = batch["DBZ"][...,0]
+        BATCH_VEL = batch["VEL"][...,0]
+        BATCH_RHOHV = batch["RHOHV"][...,0]
+        SPLIT_DBZ = []
+        SPLIT_VEL = []
+        SPLIT_RHOHV = []
+
+        for i in range(0, batch_size): #preprocess this item
+            dbz_data = BATCH_DBZ[i] #individual dbz input
+            vel_data = BATCH_VEL[i] #individual vel input
+            rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+
+            norm_dbz = normalise_input("DBZ", dbz_data)
+            norm_vel = normalise_input("VEL", vel_data)
+            norm_rhohv = normalise_input("RHOHV", rhohv_data)
+
+            SPLIT_DBZ.append(norm_dbz)
+            SPLIT_VEL.append(norm_vel)
+            SPLIT_RHOHV.append(norm_rhohv)
+        
+        #merge batch again
+        DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
+        VEL = torch.stack(SPLIT_VEL).to(DEVICE)
+        RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
+
+
+
         label = batch["label"].to(DEVICE).float()
         ef_number = batch["ef_number"].to(DEVICE).long()
 

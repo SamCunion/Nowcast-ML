@@ -5,6 +5,7 @@ import numpy as np
 import os
 from load_dataset import get_torcast_dataloader
 from sklearn import metrics
+from input_preprocessing import normalise_input
 
 #constants
 MODEL_PATH = "./saved_models/" #saved models directory
@@ -43,14 +44,35 @@ no_batches = len(data_loader)
 batches_trained = 0
 with torch.no_grad():
     for batch in data_loader:
-        #only use first radar tilt
-        #convert all NaN values to 0
-        DBZ = batch["DBZ"][...,0].to(DEVICE)
-        DBZ = torch.nan_to_num(DBZ, nan=0.0)
-        VEL = batch["VEL"][...,0].to(DEVICE)
-        VEL = torch.nan_to_num(VEL, nan=0.0)
-        RHOHV = batch["RHOHV"][...,0].to(DEVICE)
-        RHOHV = torch.nan_to_num(RHOHV, nan=0.0)
+        batch_size = len(batch["label"])
+        #only using the first radar tilt for now
+        #PREPROCESSING
+
+        #split batch before processing
+        BATCH_DBZ = batch["DBZ"][...,0]
+        BATCH_VEL = batch["VEL"][...,0]
+        BATCH_RHOHV = batch["RHOHV"][...,0]
+        SPLIT_DBZ = []
+        SPLIT_VEL = []
+        SPLIT_RHOHV = []
+
+        for i in range(0, batch_size): #preprocess this item
+            dbz_data = BATCH_DBZ[i] #individual dbz input
+            vel_data = BATCH_VEL[i] #individual vel input
+            rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+
+            norm_dbz = normalise_input("DBZ", dbz_data)
+            norm_vel = normalise_input("VEL", vel_data)
+            norm_rhohv = normalise_input("RHOHV", rhohv_data)
+
+            SPLIT_DBZ.append(norm_dbz)
+            SPLIT_VEL.append(norm_vel)
+            SPLIT_RHOHV.append(norm_rhohv)
+        
+        #merge batch again
+        DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
+        VEL = torch.stack(SPLIT_VEL).to(DEVICE)
+        RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
         label = batch["label"].cpu().numpy()
         ef_number = batch["ef_number"].cpu().numpy()
 
@@ -85,8 +107,8 @@ true_negatives, false_positives, false_negatives, true_positives = metrics.confu
 quad_kappa = metrics.cohen_kappa_score(tor_strength_truths, tor_strength_predictions, weights="quadratic")
 
 #output
-print("-----------------------------")
-print("\n\nResults:")
+print("\n\n-----------------------------")
+print("Results:")
 print("-----------------------------")
 print("Tornado Probability Head")
 print("Accuracy: " + str(accuracy))

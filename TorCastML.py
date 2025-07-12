@@ -52,8 +52,7 @@ def fc_segment():
 #tornado probability head
 def prob_head():
     return NN.Sequential(
-        NN.Linear(32, 1),
-        NN.Sigmoid()
+        NN.Linear(32, 1)
     )
 
 #EF-scale classification head
