@@ -39,8 +39,8 @@ for i in range(0, 2): #preprocess this item
     print("RHOHV Raw input stats:", rhohv_data.min(), rhohv_data.max(), rhohv_data.mean())
     print("RHOHV Normed input stats:", norm_rhohv.min(), norm_rhohv.max(), norm_rhohv.mean())
         
-label = item["label"].cpu().numpy()
-ef_number = item["ef_number"].cpu().numpy()
+label = item["label"].cpu().numpy().squeeze().astype(int)
+ef_number = item["ef_number"].cpu().numpy().squeeze().astype(int)
 
 print("label:")
 print(label)
