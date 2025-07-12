@@ -90,5 +90,6 @@ if inp.lower() != "y":
     exit()
 
 inp = input("Model name: ")
+print("saving model...")
 torch.save(model, OUT_PATH + "TorCastML-" + inp + ".pt")
 print("model saved!")
