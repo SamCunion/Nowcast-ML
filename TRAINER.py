@@ -74,6 +74,10 @@ for epoch in range(NUM_EPOCHS):
         label = batch["label"].to(DEVICE).float()
         ef_number = batch["ef_number"].to(DEVICE).long()
 
+        print(label)
+        print(ef_number)
+        exit()
+
         optimizer.zero_grad()
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
