@@ -31,4 +31,27 @@ def normalise_input(type, matrix):
 if __name__ == "__main__":
     from load_dataset import get_torcast_dataloader
     dl = get_torcast_dataloader("test", 1, 1)
-    print(dl)
+    for batch in dl:
+        print(batch)
+        batch_size = len(batch)
+        #split batch before processing
+        BATCH_DBZ = batch["DBZ"][...,0]
+        BATCH_VEL = batch["VEL"][...,0]
+        BATCH_RHOHV = batch["RHOHV"][...,0]
+
+        dbz_data = BATCH_DBZ[0] #individual dbz input
+        vel_data = BATCH_VEL[0] #individual vel input
+        rhohv_data = BATCH_RHOHV[0] #individual rhohv input
+
+        norm_dbz = normalise_input("DBZ", dbz_data)
+        norm_vel = normalise_input("VEL", vel_data)
+        norm_rhohv = normalise_input("RHOHV", rhohv_data)
+
+        print("DBZ normalised:")
+        print(norm_dbz)
+        print("VEL normalsied:")
+        print(norm_vel)
+        print("RHOHV Normalised:")
+        print(norm_rhohv)
+            
+        break
