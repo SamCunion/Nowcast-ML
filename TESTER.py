@@ -104,10 +104,6 @@ with torch.no_grad():
         tor_strength_predictions.extend(batch_strength_predictions)
         tor_strength_truths.extend(ef_number + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
-        print(prob)
-        print(batch_tor_probs)
-        exit()
-
         #update visual
         batches_trained += 1
         print("Batch [" + str(batches_trained) + "/" + str(no_batches) + "] Tested")
