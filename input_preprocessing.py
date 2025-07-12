@@ -18,6 +18,9 @@ def normalise_input(type, matrix):
         #simple cast all values from max,min to 0,1
         min_val = torch.min(nansafe_matrix)
         max_val = torch.max(nansafe_matrix)
+        if (min_val == max_val):
+            print("wut?")
+            exit()
         normed = (nansafe_matrix - min_val) / (max_val - min_val)
     elif (type == "RHOHV"):
         #convert nans
@@ -29,6 +32,9 @@ def normalise_input(type, matrix):
         nansafe_matrix = torch.nan_to_num(matrix, nan=0.0)
         #get the highest wind speed (in either direction), which will be represented by -1.0 and 1.0. all values then fall between these extremes
         abs_max = torch.max(torch.abs(nansafe_matrix))
+        if (abs_max == 0):
+            print("AHA THERE WE GO")
+            exit()
         normed = torch.clamp(nansafe_matrix / abs_max, -1.0, 1.0)
     else:
         print("INVALID INPUT TYPE PASSED TO NORMALISE INPUT: " + type + ", EXITING PROCESS")
