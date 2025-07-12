@@ -19,7 +19,8 @@ def normalise_input(type, matrix):
         min_val = torch.min(nansafe_matrix)
         max_val = torch.max(nansafe_matrix)
         if (min_val == max_val):
-            print("wut?")
+            print(min_val)
+            print(matrix)
             exit()
         normed = (nansafe_matrix - min_val) / (max_val - min_val)
     elif (type == "RHOHV"):
