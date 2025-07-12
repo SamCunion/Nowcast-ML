@@ -66,6 +66,11 @@ for epoch in range(NUM_EPOCHS):
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)
 
+            if (norm_dbz == False):
+                nan_detected = True
+                print("weird dbz matrix detected")
+                break;
+
             SPLIT_DBZ.append(norm_dbz)
             SPLIT_VEL.append(norm_vel)
             SPLIT_RHOHV.append(norm_rhohv)

@@ -64,11 +64,15 @@ with torch.no_grad():
             #is one of the inputs filled with nans? red alert!
             if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
                 print("BATCH CONTAINED ALL NAN DATA")
-                continue;
+                continue
 
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)
+
+            if (norm_dbz == False):
+                print("Weird dbz detected")
+                continue
 
             SPLIT_DBZ.append(norm_dbz)
             SPLIT_VEL.append(norm_vel)
