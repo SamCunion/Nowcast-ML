@@ -71,12 +71,9 @@ for epoch in range(NUM_EPOCHS):
 
 
 
-        label = batch["label"].to(DEVICE).float()
-        ef_number = batch["ef_number"].to(DEVICE).long()
+        label = batch["label"].squeeze().to(DEVICE).float()
+        ef_number = batch["ef_number"].squeeze().to(DEVICE).long()
 
-        print(label)
-        print(ef_number)
-        exit()
 
         optimizer.zero_grad()
 
