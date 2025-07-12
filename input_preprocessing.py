@@ -13,6 +13,8 @@ def normalise_input(type, matrix):
     if (type == "DBZ"): #0,1
         #convert nans
         nansafe_matrix = torch.nan_to_num(matrix, nan=0.0)
+        #remove negative values
+        nansafe_matrix = torch.clamp(nansafe_matrix, min=0.0)
         #simple cast all values from max,min to 0,1
         min_val = torch.min(nansafe_matrix)
         max_val = torch.max(nansafe_matrix)
