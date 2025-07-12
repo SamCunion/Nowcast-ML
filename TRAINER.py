@@ -84,7 +84,7 @@ for epoch in range(NUM_EPOCHS):
         ef_indices = ef_number + 1
         ef_truths = torch.nn.functional.one_hot(ef_indices, num_classes=7).float()
         ef_truths = ef_truths.squeeze(1)
-        prob_loss = loss_prob(prob, label)
+        prob_loss = loss_prob(prob.squeeze(dim=1), label)
         class_loss = loss_classifier(class_logits, ef_truths)
         overall_loss = prob_loss + class_loss
         overall_loss.backward()
