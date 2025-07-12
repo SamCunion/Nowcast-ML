@@ -66,7 +66,7 @@ for epoch in range(NUM_EPOCHS):
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)
 
-            if (norm_dbz == False):
+            if (isinstance(norm_dbz, bool) and norm_dbz == False):
                 nan_detected = True
                 print("weird dbz matrix detected")
                 break;

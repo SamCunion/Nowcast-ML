@@ -70,7 +70,7 @@ with torch.no_grad():
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)
 
-            if (norm_dbz == False):
+            if (isinstance(norm_dbz, bool) and norm_dbz == False):
                 print("Weird dbz detected")
                 continue
 
