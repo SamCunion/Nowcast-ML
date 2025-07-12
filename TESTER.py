@@ -78,8 +78,8 @@ with torch.no_grad():
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
 
-        batch_tor_probs = torch.sigmoid(prob).cpu().numpy()
-        batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).astype(int)
+        batch_tor_probs = torch.sigmoid(prob)
+        batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).int().view(-1).cpu().numpy()
         tor_prob_predictions.extend(batch_tor_predictions)
         tor_prob_truths.extend(label.astype(int))
 
@@ -88,6 +88,7 @@ with torch.no_grad():
         tor_strength_predictions.extend(batch_strength_predictions)
         tor_strength_truths.extend(ef_number + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
+        print(batch_tor_probs)
         print(tor_prob_predictions)
         print(tor_prob_truths)
         print(tor_strength_predictions)
