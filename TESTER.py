@@ -76,14 +76,14 @@ with torch.no_grad():
                 nan_detected = True
                 break
 
-            
-            if (nan_detected): #discard the batch to prevent dirty data
-                print("BATCH CONTAINED ALL NAN DATA!")
-                continue
 
             SPLIT_DBZ.append(norm_dbz)
             SPLIT_VEL.append(norm_vel)
             SPLIT_RHOHV.append(norm_rhohv)
+        
+        if (nan_detected): #discard the batch to prevent dirty data
+            print("BATCH CONTAINED ALL NAN DATA!")
+            continue
         
         #merge batch again
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
