@@ -20,20 +20,24 @@ for i in range(0, 2): #preprocess this item
     vel_data = BATCH_VEL[i] #individual vel input
     rhohv_data = BATCH_RHOHV[i] #individual rhohv input
 
+    dbz_data = torch.nan_to_num(dbz_data, nan=0.0)
+    vel_data = torch.nan_to_num(vel_data, nan=0.0)
+    rhohv_data = torch.nan_to_num(rhohv_data, nan=1.0)
+
     norm_dbz = normalise_input("DBZ", dbz_data)
     norm_vel = normalise_input("VEL", vel_data)
     norm_rhohv = normalise_input("RHOHV", rhohv_data)
     print(norm_dbz)
-    print("Raw input stats:", dbz_data.min(), dbz_data.max(), dbz_data.mean())
-    print("Normed input stats:", norm_dbz.min(), norm_dbz.max(), norm_dbz.mean())
+    print("DBZ Raw input stats:", dbz_data.min(), dbz_data.max(), dbz_data.mean())
+    print("DBZ Normed input stats:", norm_dbz.min(), norm_dbz.max(), norm_dbz.mean())
 
     print(norm_vel)
-    print("Raw input stats:", vel_data.min(), vel_data.max(), vel_data.mean())
-    print("Normed input stats:", norm_vel.min(), norm_vel.max(), norm_vel.mean())
+    print("VEL Raw input stats:", vel_data.min(), vel_data.max(), vel_data.mean())
+    print("VEL Normed input stats:", norm_vel.min(), norm_vel.max(), norm_vel.mean())
 
     print(norm_rhohv)
-    print("Raw input stats:", rhohv_data.min(), rhohv_data.max(), rhohv_data.mean())
-    print("Normed input stats:", norm_rhohv.min(), norm_rhohv.max(), norm_rhohv.mean())
+    print("RHOHV Raw input stats:", rhohv_data.min(), rhohv_data.max(), rhohv_data.mean())
+    print("RHOHV Normed input stats:", norm_rhohv.min(), norm_rhohv.max(), norm_rhohv.mean())
         
 label = item["label"].cpu().numpy()
 ef_number = item["ef_number"].cpu().numpy()
