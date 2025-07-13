@@ -145,5 +145,5 @@ print("Quadratic Kappa: " + str(quad_kappa))
 print("\nIntensity Counts:")
 intensity_labels = ["NonTor", "EF-0", "EF-1", "EF-2", "EF-3", "EF-4", "EF-5"]
 for i in range(7):
-    print("\n[" + intensity_labels[i] + "] Actual: " + summed_truths.get(i, 0) + ", Predicted: " + summed_preds.get(i, 0))
+    print("\n[" + intensity_labels[i] + "] Actual: " + str(summed_truths.get(i, 0)) + ", Predicted: " + str(summed_preds.get(i, 0)))
 print("\n\n\nTesting completed!")
