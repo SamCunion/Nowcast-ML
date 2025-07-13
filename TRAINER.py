@@ -16,7 +16,7 @@ if inp.lower() != "y":
 #constants
 NUM_EPOCHS = 1
 OUT_PATH = "./saved_models/"
-DATASET_EF_TOTALS = np.array([5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
+DATASET_EF_TOTALS = np.array([189276, 5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
 TOTAL_ITEMS = 203132
 
 data_loader = get_torcast_dataloader("train", 32, 10)
