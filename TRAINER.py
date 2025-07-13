@@ -16,6 +16,8 @@ if inp.lower() != "y":
 #constants
 NUM_EPOCHS = 1
 OUT_PATH = "./saved_models/"
+DATASET_EF_TOTALS = np.array([5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
+TOTAL_ITEMS = 203132
 
 data_loader = get_torcast_dataloader("train", 32, 10)
 
@@ -27,7 +29,7 @@ print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
 model = TorCastML().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
 loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
-loss_classifier = torch.nn.CrossEntropyLoss()
+loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
 process_start_time = time.time()
@@ -101,7 +103,7 @@ for epoch in range(NUM_EPOCHS):
         ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), label)
         class_loss = loss_classifier(class_logits, ef_truths)
-        overall_loss = (prob_loss * 0.9) + (class_loss * 0.1) #scale depending on what head should influence loss more
+        overall_loss = (prob_loss * 0.5) + (class_loss * 0.5) #scale depending on what head should influence loss more
         overall_loss.backward()
         optimizer.step()
 

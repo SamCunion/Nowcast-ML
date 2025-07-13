@@ -145,7 +145,6 @@ print("Quadratic Kappa: " + str(quad_kappa))
 print("\nIntensity Counts:")
 intensity_labels = ["NonTor", "EF-0", "EF-1", "EF-2", "EF-3", "EF-4", "EF-5"]
 for i in range(7):
-    print("[" + intensity_labels[i] + "] Actual: " + str(summed_truths.get(i, 0)) + ", Predicted: " + str(summed_preds.get(i, 0)))
-print("\n\n\nTesting completed!")
-print(tor_strength_predictions[0])
-print(tor_strength_truths[0])
+    print("[" + intensity_labels[i] + "] Actual: " + str(summed_truths[i]) + ", Predicted: " + str(summed_preds[i]))
+print("-----------------------------")
+print("\nTesting completed!")
