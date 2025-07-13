@@ -144,7 +144,17 @@ print("Torando Intensity Head")
 print("Quadratic Kappa: " + str(quad_kappa))
 print("\nIntensity Counts:")
 intensity_labels = ["NonTor", "EF-0", "EF-1", "EF-2", "EF-3", "EF-4", "EF-5"]
+reg_tot, reg_pred = 0
+sig_tot, sig_pred = 0
 for i in range(7):
     print("[" + intensity_labels[i] + "] Actual: " + str(summed_truths[i]) + ", Predicted: " + str(summed_preds[i]))
+    if (i == 1 or i == 2 or i == 3):
+        reg_tot += summed_truths[i]
+        reg_pred += summed_preds[i]
+    elif (i == 4 or i == 5 or i == 6):
+        sig_tot += summed_truths[i]
+        sig_pred += summed_preds[i]
+print("Regular Tornado Predictions: " + str(reg_pred) + "/" + str(reg_tot))
+print("Significant Tornado Predictions: " + str(sig_pred) + "/" + str(sig_tot))
 print("-----------------------------")
 print("\nTesting completed!")
