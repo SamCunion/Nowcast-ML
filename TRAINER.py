@@ -17,34 +17,11 @@ if inp.lower() != "y":
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
 
-def gaussian_smoothed_loss(logits, targets):
-    #compute distance from truth the prediction was
-    targets = targets.view(-1).unsqueeze(1).float()
-    class_ids = torch.arange(7, device=DEVICE).float().unsqueeze(0)
-    dist = (class_ids - targets).abs()
-
-    #gaussian smoothing
-    smooth = torch.exp(-0.5 * (dist / CLASS_ACCEPTANCE_METRIC)**2)
-
-    #class imbalance bias
-    weighted = smooth * CLASS_WEIGHTS.unsqueeze(0).to(DEVICE)
-
-    #normalise for prob distributions
-    soft_targets = weighted / (weighted.sum(dim=1, keepdim=True) + 1e-8)
-
-    #kl divergence loss
-    log_probs = torch.nn.functional.log_softmax(logits, dim=1)
-    loss = torch.nn.functional.kl_div(log_probs, soft_targets, reduction="batchmean")
-    return loss
-
-
 #constants
 NUM_EPOCHS = 1
 OUT_PATH = "./saved_models/"
 DATASET_EF_TOTALS = np.array([189275, 5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
 TOTAL_ITEMS = 203132
-CLASS_WEIGHTS = torch.tensor(TOTAL_ITEMS / DATASET_EF_TOTALS)
-CLASS_ACCEPTANCE_METRIC = 1.0 #how accepting the loss is of "almost right" predictions
 
 data_loader = get_torcast_dataloader("train", 32, 10)
 
@@ -123,8 +100,10 @@ for epoch in range(NUM_EPOCHS):
         #classifier truth
         ef_labels = torch.tensor([batch_size])
         ef_indices = ef_number + 1
+        ef_truths = torch.nn.functional.one_hot(ef_indices, num_classes=7).float()
+        ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), label)
-        class_loss = gaussian_smoothed_loss(class_logits, ef_indices)
+        class_loss = loss_classifier(class_logits, ef_truths)
         overall_loss = (prob_loss * 0.5) + (class_loss * 0.5) #scale depending on what head should influence loss more
         overall_loss.backward()
         optimizer.step()
