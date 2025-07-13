@@ -144,8 +144,8 @@ print("Torando Intensity Head")
 print("Quadratic Kappa: " + str(quad_kappa))
 print("\nIntensity Counts:")
 intensity_labels = ["NonTor", "EF-0", "EF-1", "EF-2", "EF-3", "EF-4", "EF-5"]
-reg_tot, reg_pred = 0
-sig_tot, sig_pred = 0
+reg_tot = 0; reg_pred = 0
+sig_tot = 0; sig_pred = 0
 for i in range(7):
     print("[" + intensity_labels[i] + "] Actual: " + str(summed_truths[i]) + ", Predicted: " + str(summed_preds[i]))
     if (i == 1 or i == 2 or i == 3):
