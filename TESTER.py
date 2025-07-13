@@ -5,6 +5,7 @@ import numpy as np
 import os
 from load_dataset import get_torcast_dataloader
 from sklearn import metrics
+from collections import Counter
 from input_preprocessing import normalise_input
 
 #constants
@@ -121,6 +122,9 @@ true_negatives, false_positives, false_negatives, true_positives = metrics.confu
 
 #tornado intensity evaluation
 quad_kappa = metrics.cohen_kappa_score(tor_strength_truths, tor_strength_predictions, weights="quadratic")
+summed_truths = Counter(tor_strength_truths)
+summed_preds = Counter(tor_strength_predictions)
+
 
 #output
 print("\n\n-----------------------------")
@@ -138,7 +142,8 @@ print("False Negatives: " + str(false_negatives))
 print("-----------------------------")
 print("Torando Intensity Head")
 print("Quadratic Kappa: " + str(quad_kappa))
-print("\n       NT  EF0 EF1 EF2 EF3 EF4 EF5")
-print("Truth: " + str(tor_strength_truths))
-print("Preds: " + str(tor_strength_predictions))
+print("\nIntensity Counts:")
+intensity_labels = ["NonTor", "EF-0", "EF-1", "EF-2", "EF-3", "EF-4", "EF-5"]
+for i in range(7):
+    print("\n[" + intensity_labels[i] + "] Actual: " + summed_truths.get(i, 0) + ", Predicted: " + summed_preds.get(i, 0))
 print("\n\n\nTesting completed!")
