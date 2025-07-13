@@ -13,39 +13,23 @@ inp = input("Y/N: ")
 if inp.lower() != "y":
     exit()
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
-
-#for each ef label, calculates a list of weights that deteriates the further away the prediction is from the original truth
-def skewed_label_smoothing(batch_truths):
-    batch_length = batch_truths.size(0)
-    out = torch.zeros(batch_length, 7)
-    for i in range(7):
-        distance = (i - batch_truths).float()
-        weights = torch.exp(-0.5 * (distance / CLASSIFIER_ACCEPTANCE)**2)
-        out[:, i] = weights
-    out = out.to(DEVICE)
-    out *= CLASSIFIER_WEIGHTS.unsqueeze(0)
-    #must add to 1
-    out = out / out.sum(dim=1, keepdim=True)
-    return out
-
 #constants
-NUM_EPOCHS = 3
+NUM_EPOCHS = 1
 OUT_PATH = "./saved_models/"
 DATASET_EF_TOTALS = np.array([189275, 5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
 TOTAL_ITEMS = 203132
-CLASSIFIER_WEIGHTS = torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)
-CLASSIFIER_ACCEPTANCE = 1.0 #how "forgiving" the classifier head is for adjacent predictions
 
 data_loader = get_torcast_dataloader("train", 32, 10)
 
 print("Running TorCast Trainer Module")
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
+
 model = TorCastML().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
 loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
-loss_classifier = torch.nn.CrossEntropyLoss(label_smoothing=0.2, weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
+loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
 process_start_time = time.time()
@@ -118,8 +102,7 @@ for epoch in range(NUM_EPOCHS):
         ef_truths = torch.nn.functional.one_hot(ef_indices, num_classes=7).float()
         ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), label)
-        class_loss = torch.nn.functional.log_softmax(class_logits, dim=1)
-        class_loss = torch.nn.functional.kl_div(class_loss, skewed_label_smoothing(ef_truths), reduction="batchmean")
+        class_loss = loss_classifier(class_logits, ef_truths)
         overall_loss = (prob_loss * 0.5) + (class_loss * 0.5) #scale depending on what head should influence loss more
         overall_loss.backward()
         optimizer.step()
