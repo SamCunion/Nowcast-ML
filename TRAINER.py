@@ -66,7 +66,7 @@ for epoch in range(NUM_EPOCHS):
                 break;
 
             #interpolate noisy velocity data
-            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
+            vel_data = interpolate_velocity_noise(dbz_data, vel_data).to(DEVICE)
 
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)

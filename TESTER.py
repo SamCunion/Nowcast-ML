@@ -69,7 +69,7 @@ with torch.no_grad():
                 break
 
             #interpolate noisy velocity data
-            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
+            vel_data = interpolate_velocity_noise(dbz_data, vel_data).to(DEVICE)
 
             #normalise the inputs
             norm_dbz = normalise_input("DBZ", dbz_data)
