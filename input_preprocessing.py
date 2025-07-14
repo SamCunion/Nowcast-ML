@@ -67,7 +67,7 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
     combined = smoothed_velocity.squeeze() / (smoothed_dbz.squeeze() + 1e-6)
 
     out = VEL.clone()
-    out[mask] = combined.squeeze(0)[mask]
+    out[0][mask[0]] = combined[mask[0]]
     return out
 
 #testing
