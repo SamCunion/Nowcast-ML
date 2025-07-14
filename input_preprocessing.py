@@ -49,7 +49,7 @@ def normalise_input(type, matrix):
 def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     mask = (DBZ > DBZ_THRESHOLD) & np.isnan(VEL)
     nan_removed_vel = np.nan_to_num(VEL, nan=0.0)
-    high_dbz_mask = (DBZ > DBZ_THRESHOLD).astype(float)
+    high_dbz_mask = (DBZ > DBZ_THRESHOLD).float()
 
     smoothed_velocity = scipy.ndimage.gaussian_filter(nan_removed_vel * high_dbz_mask, sigma=2)
     smoothed_dbz = scipy.ndimage.gaussin_filter(high_dbz_mask, sigma=2)
