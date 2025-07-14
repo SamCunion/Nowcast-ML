@@ -51,7 +51,7 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     mask = (DBZ > DBZ_THRESHOLD) & np.isnan(VEL)
     smoothed = VEL.detach().clone()
     #only changes the masked portions of the vel data, smooths data using neighbourhood interpolation
-    smoothed[mask] = scipy.ndimage.generic_filter(VEL, np.nanmean, size=5)[mask]
+    smoothed[mask] = torch.from_numpy(scipy.ndimage.generic_filter(VEL, np.nanmean, size=5)).float()[mask]
     return smoothed
 
 
