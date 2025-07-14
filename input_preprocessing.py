@@ -7,6 +7,8 @@
 #recognise extreme values in velocity, and replace them with something more sensible?
 #maybe take rhohv, take values that are above 1 and clamp to 1. maybe instead of nan being 0, make it 1?
 import torch
+import scipy
+import numpy as np
 
 #Normalises matrix values between 0,1 for DBZ, RHOHV, between -1,1 for VEL. also converts NAN to 0
 def normalise_input(type, matrix):
@@ -42,6 +44,15 @@ def normalise_input(type, matrix):
         print("INVALID INPUT TYPE PASSED TO NORMALISE INPUT: " + type + ", EXITING PROCESS")
         exit()
     return normed
+
+#interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
+def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
+    #create mask where velocity data is NAN (missing) and DBZ > DBZ_THRESHOLD
+    mask = (DBZ > DBZ_THRESHOLD) & np.isnan(VEL)
+    smoothed = VEL.copy()
+    #only changes the masked portions of the vel data, smooths data using neighbourhood interpolation
+    smoothed[mask] = scipy.ndimage.generic_filter(VEL, np.nanmean, size=5)[mask]
+    return smoothed
 
 
 #testing

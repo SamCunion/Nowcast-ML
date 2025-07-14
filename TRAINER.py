@@ -4,7 +4,7 @@ import time
 import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML import TorCastML
-from input_preprocessing import normalise_input
+from input_preprocessing import normalise_input, interpolate_velocity_noise
 
 #entry
 print("TorCast trainer module")
@@ -64,6 +64,9 @@ for epoch in range(NUM_EPOCHS):
             if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
                 nan_detected = True
                 break;
+
+            #interpolate noisy velocity data
+            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)

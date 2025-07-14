@@ -6,7 +6,7 @@ import os
 from load_dataset import get_torcast_dataloader
 from sklearn import metrics
 from collections import Counter
-from input_preprocessing import normalise_input
+from input_preprocessing import normalise_input, interpolate_velocity_noise
 
 #constants
 MODEL_PATH = "./saved_models/" #saved models directory
@@ -68,6 +68,10 @@ with torch.no_grad():
                 nan_detected = True
                 break
 
+            #interpolate noisy velocity data
+            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
+
+            #normalise the inputs
             norm_dbz = normalise_input("DBZ", dbz_data)
             norm_vel = normalise_input("VEL", vel_data)
             norm_rhohv = normalise_input("RHOHV", rhohv_data)

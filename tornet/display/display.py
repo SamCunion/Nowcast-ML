@@ -101,9 +101,6 @@ def plot_grid(data: Dict[str,Any], fig):
     vel_data = vel_data[:, :, 1]
     dbz_data = dbz_data[:, :, 1]
     cc_data = cc_data[:, :, 1]
-    vel_data = np.rot90(vel_data, k=1)
-    dbz_data = np.rot90(dbz_data, k=1)
-    cc_data = np.rot90(cc_data, k=1)
     #vel_data = np.fliplr(vel_data)
     #dbz_data = np.fliplr(dbz_data)
     #cc_data = np.fliplr(cc_data)
