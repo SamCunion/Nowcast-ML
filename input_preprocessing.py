@@ -54,7 +54,7 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     nan_removed = np.nan_to_num(VEL, nan=0.0)
 
     #only changes the masked portions of the vel data, smooths data using neighbourhood interpolation
-    smoothed[mask] = torch.from_numpy(scipy.ndimage.gaussian_filter(nan_removed, * is_under_dbz, sigma=2)).float()[mask]
+    smoothed[mask] = torch.from_numpy(scipy.ndimage.gaussian_filter(nan_removed * is_under_dbz, sigma=2)).float()[mask]
     return smoothed
 
 
