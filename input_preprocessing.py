@@ -46,21 +46,28 @@ def normalise_input(type, matrix):
     return normed
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
-def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
-    dbz_raw = DBZ.cpu().numpy()
-    vel_raw = VEL.cpu().numpy()
+def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
+    device = VEL.device
+    mask = torch.isnan(VEL) & (DBZ > DBZ_THRESHOLD)
+    filled_vel = torch.nan_to_num(VEL, nan=0.0)
+    weighted_reflectivity = (DBZ > DBZ_THRESHOLD).float()
 
-    mask = (dbz_raw > DBZ_THRESHOLD) & np.isnan(vel_raw)
-    nan_removed_vel = np.nan_to_num(vel_raw, nan=0.0)
-    high_dbz_mask = (dbz_raw > DBZ_THRESHOLD).astype(float)
+    kernel_size = int(6 * SIGMA + 1)
+    coords = torch.arange(kernel_size, dtype=torch.float32, device=device) - kernel_size // 2
+    gaussian = torch.exp(-0.5 * (coords / SIGMA)**2)
+    kernel = (gaussian[:, None] @ gaussian[None, :])
+    kernel /= kernel.sum()
+    kernel = kernel.unsqueeze(0).unsqueeze(0)
 
-    smoothed_velocity = scipy.ndimage.gaussian_filter(nan_removed_vel * high_dbz_mask, sigma=2)
-    smoothed_dbz = scipy.ndimage.gaussian_filter(high_dbz_mask, sigma=2)
+    velocity = (filled_vel * weighted_reflectivity).unsqueeze(0).unsqueeze(0)
+    dbz = weighted_reflectivity.unsqueeze(0).unsqueeze(0)
 
-    combined = smoothed_velocity / (smoothed_dbz + 1e-6)
-    out = vel_raw.copy()
+    smoothed_velocity = torch.nn.functional.conv2d(velocity, kernel, padding=kernel_size // 2)
+    smoothed_dbz = torch.nn.functional.conv2d(dbz, kernel, padding=kernel_size // 2)
+
+    combined = smoothed_velocity.squeeze() / (smoothed_dbz.squeeze() + 1e-6)
+    out = VEL.clone()
     out[mask] = combined[mask]
-    out = torch.from_numpy(out)
     return out
 
 #testing
