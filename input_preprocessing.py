@@ -49,7 +49,7 @@ def normalise_input(type, matrix):
 def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     #create mask where velocity data is NAN (missing) and DBZ > DBZ_THRESHOLD
     mask = (DBZ > DBZ_THRESHOLD) & np.isnan(VEL)
-    smoothed = VEL.copy()
+    smoothed = VEL.detach().clone()
     #only changes the masked portions of the vel data, smooths data using neighbourhood interpolation
     smoothed[mask] = scipy.ndimage.generic_filter(VEL, np.nanmean, size=5)[mask]
     return smoothed
