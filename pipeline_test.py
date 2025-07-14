@@ -36,7 +36,7 @@ index = random.randint(0, 63)
 dbz_data = batch["DBZ"][...,0][index]
 vel_data = batch["VEL"][...,0][index]
 rhohv_data = batch["RHOHV"][...,0][index]
-ef_number = batch["ef_number"][index][0]
+ef_number = batch["ef_number"][index][0][0]
 
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Raw, non-normalsied data")
 
