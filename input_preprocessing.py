@@ -59,8 +59,8 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
     kernel /= kernel.sum()
     kernel = kernel.unsqueeze(0).unsqueeze(0)
 
-    velocity = (filled_vel * weighted_reflectivity).unsqueeze(0).unsqueeze(0)
-    dbz = weighted_reflectivity.unsqueeze(0).unsqueeze(0)
+    velocity = (filled_vel * weighted_reflectivity)
+    dbz = weighted_reflectivity
 
     smoothed_velocity = torch.nn.functional.conv2d(velocity, kernel, padding=kernel_size // 2)
     smoothed_dbz = torch.nn.functional.conv2d(dbz, kernel, padding=kernel_size // 2)
