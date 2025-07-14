@@ -48,10 +48,13 @@ def normalise_input(type, matrix):
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
 def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     #create mask where velocity data is NAN (missing) and DBZ > DBZ_THRESHOLD
-    mask = (DBZ > DBZ_THRESHOLD) & np.isnan(VEL)
+    is_under_dbz = (DBZ > DBZ_THRESHOLD)
+    mask = is_under_dbz & np.isnan(VEL)
     smoothed = VEL.detach().clone()
+    nan_removed = np.nan_to_num(VEL, nan=0.0)
+
     #only changes the masked portions of the vel data, smooths data using neighbourhood interpolation
-    smoothed[mask] = torch.from_numpy(scipy.ndimage.generic_filter(VEL, np.nanmean, size=5)).float()[mask]
+    smoothed[mask] = torch.from_numpy(scipy.ndimage.gaussian_filter(nan_removed, * is_under_dbz, sigma=2)).float()[mask]
     return smoothed
 
 
