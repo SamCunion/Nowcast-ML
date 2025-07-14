@@ -57,17 +57,17 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
     gaussian = torch.exp(-0.5 * (coords / SIGMA)**2)
     kernel = (gaussian[:, None] @ gaussian[None, :])
     kernel /= kernel.sum()
-    kernel = kernel.unsqueeze(0).unsqueeze(0)
+    kernel = kernel.view(1, 1, kernel_size, kernel_size)
 
-    velocity = (filled_vel * weighted_reflectivity)
-    dbz = weighted_reflectivity
+    velocity = (filled_vel * weighted_reflectivity).unsqueeze(0)
+    dbz = weighted_reflectivity.unsqueeze(0)
 
     smoothed_velocity = torch.nn.functional.conv2d(velocity, kernel, padding=kernel_size // 2)
     smoothed_dbz = torch.nn.functional.conv2d(dbz, kernel, padding=kernel_size // 2)
-
     combined = smoothed_velocity.squeeze() / (smoothed_dbz.squeeze() + 1e-6)
+
     out = VEL.clone()
-    out[mask] = combined[mask]
+    out[mask] = combined.squeeze(0)[mask]
     return out
 
 #testing
