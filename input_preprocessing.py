@@ -55,7 +55,7 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20):
     high_dbz_mask = (dbz_raw > DBZ_THRESHOLD).astype(float)
 
     smoothed_velocity = scipy.ndimage.gaussian_filter(nan_removed_vel * high_dbz_mask, sigma=2)
-    smoothed_dbz = scipy.ndimage.gaussin_filter(high_dbz_mask, sigma=2)
+    smoothed_dbz = scipy.ndimage.gaussian_filter(high_dbz_mask, sigma=2)
 
     combined = smoothed_velocity / (smoothed_dbz + 1e-6)
     out = vel_raw.copy()
