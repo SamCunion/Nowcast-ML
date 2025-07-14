@@ -1,40 +1,49 @@
 import torch
 import numpy as np
 import matplotlib.pyplot as plot
-import os
-from tornet.display.display import plot_grid
+from tornet.display.display import plot_grid, get_cmap
 import random
 from load_dataset import get_torcast_dataloader
-from sklearn import metrics
 from input_preprocessing import normalise_input, interpolate_velocity_noise
 
 def display_data(DBZ, VEL, RHOHV, EF_rating, title):
     figure = plot.figure(figsize=(12, 4))
-    data = dict()
-    data["DBZ"] = DBZ
-    data["VEL"] = VEL
-    data[RHOHV] = RHOHV
-    plot_grid(data, fig=figure)
+    cmapv, normv = get_cmap("vel")
+    cmapd, normd = get_cmap("dbz")
+    cmapc, normc = get_cmap("rhohv")
+    ax1 = figure.add_subplot(1, 3, 1)
+    ax2 = figure.add_subplot(1, 3, 2)
+    ax3 = figure.add_subplot(1, 3, 3)
+    ax1.imshow(DBZ, origin="upper", cmap=cmapd)
+    ax2.imshow(VEL, origin="upper", cmap=cmapv)
+    ax3.imshow(RHOHV, origin="upper", cmap=cmapc)
+    ax1.tick_params(axis="both", which="both", length=0)
+    ax2.tick_params(axis="both", which="both", length=0)
+    ax3.tick_params(axis="both", which="both", length=0)
+    ax1.set_xticklabels([])
+    ax1.set_yticklabels([])
+    ax2.set_xticklabels([])
+    ax2.set_yticklabels([])
+    ax3.set_xticklabels([])
+    ax3.set_yticklabels([])
     figure.text(.5, .05, title + ", EF: " + str(EF_rating), ha="center")
-    figure.show()
+    plot.show()
 
-data_loader = get_torcast_dataloader("train", 2000, 1)
-
-
+data_loader = get_torcast_dataloader("train", 64, 10)
 batch = next(iter(data_loader))
-item = random.choice(batch)
+index = random.randint(0, 63)
 
-dbz_data = item["DBZ"][...,0]
-vel_data = item["VEL"][...,0]
-rhohv_data = item["RHOHV"][...,0]
-ef_number = item["ef_number"]
+dbz_data = batch["DBZ"][...,0][index]
+vel_data = batch["VEL"][...,0][index]
+rhohv_data = batch["RHOHV"][...,0][index]
+ef_number = batch["ef_number"][index]
 
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Raw, non-normalsied data")
 
 #is one of the inputs filled with nans? red alert!
 if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
     print("NANITEM!")
-    print(item)
+    print(batch["ef_number"][index])
 
 #interpolate noisy velocity data
 vel_data = interpolate_velocity_noise(dbz_data, vel_data)
@@ -51,5 +60,5 @@ display_data(norm_dbz, norm_vel, norm_rhohv, ef_number, "Inputs normalised")
 if (isinstance(norm_dbz, bool) and norm_dbz == False):
     nan_detected = True
     print("weird dbz matrix detected")
-    print(item)
+    print(batch["ef_number"][index])
     exit()

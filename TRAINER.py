@@ -107,7 +107,7 @@ for epoch in range(NUM_EPOCHS):
         ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), label)
         class_loss = loss_classifier(class_logits, ef_truths)
-        overall_loss = (prob_loss * 0.5) + (class_loss * 0.5) #scale depending on what head should influence loss more
+        overall_loss = (prob_loss * 0.7) + (class_loss * 0.3) #scale depending on what head should influence loss more
         overall_loss.backward()
         optimizer.step()
 
