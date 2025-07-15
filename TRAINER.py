@@ -1,6 +1,7 @@
 #trainer trains the model with training data
 import torch
 import time
+import random
 import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML import TorCastML
@@ -56,17 +57,17 @@ for epoch in range(NUM_EPOCHS):
 
         nan_detected = False
         for i in range(0, batch_size): #preprocess this item
-            raw_dbz_data = BATCH_DBZ[i] #individual dbz input
-            raw_vel_data = BATCH_VEL[i] #individual vel input
-            raw_rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+            dbz_data = BATCH_DBZ[i] #individual dbz input
+            vel_data = BATCH_VEL[i] #individual vel input
+            rhohv_data = BATCH_RHOHV[i] #individual rhohv input
 
             #is one of the inputs filled with nans? red alert!
-            if (torch.isnan(raw_dbz_data).all() or torch.isnan(raw_vel_data).all() or torch.isnan(raw_rhohv_data).all()):
+            if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
                 nan_detected = True
                 break;
 
             #discard data where DBZ is less than a threshold (default 20)
-            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(raw_dbz_data, raw_vel_data, raw_rhohv_data)
+            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
 
             #remove sidelobe artefacts
             vel_data = remove_sidelobe_artefacts(vel_data)
@@ -106,7 +107,8 @@ for epoch in range(NUM_EPOCHS):
         optimizer.zero_grad()
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
-
+        
+        
         #classifier truth
         ef_labels = torch.tensor([batch_size])
         ef_indices = ef_number + 1

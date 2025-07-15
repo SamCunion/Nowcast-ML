@@ -59,17 +59,17 @@ with torch.no_grad():
 
         nan_detected = False
         for i in range(0, batch_size): #preprocess this item
-            raw_dbz_data = BATCH_DBZ[i] #individual dbz input
-            raw_vel_data = BATCH_VEL[i] #individual vel input
-            raw_rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+            dbz_data = BATCH_DBZ[i] #individual dbz input
+            vel_data = BATCH_VEL[i] #individual vel input
+            rhohv_data = BATCH_RHOHV[i] #individual rhohv input
 
             #is one of the inputs filled with nans? red alert!
-            if (torch.isnan(raw_dbz_data).all() or torch.isnan(raw_vel_data).all() or torch.isnan(raw_rhohv_data).all()):
+            if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
                 nan_detected = True
                 break
 
             #discard data where DBZ is less than a threshold (default 20)
-            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(raw_dbz_data, raw_vel_data, raw_rhohv_data)
+            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
 
             #remove sidelobe artefacts
             vel_data = remove_sidelobe_artefacts(vel_data)
@@ -89,8 +89,8 @@ with torch.no_grad():
 
 
             SPLIT_DBZ.append(dbz_data)
-            SPLIT_VEL.append(dbz_data)
-            SPLIT_RHOHV.append(dbz_data)
+            SPLIT_VEL.append(vel_data)
+            SPLIT_RHOHV.append(rhohv_data)
         
         if (nan_detected): #discard the batch to prevent dirty data
             print("BATCH CONTAINED ALL NAN DATA!")

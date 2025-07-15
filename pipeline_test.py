@@ -55,7 +55,6 @@ display_data(dbz_data, vel_data, rhohv_data, ef_number, "Removed velocity artefa
 
 #interpolate noisy velocity data
 vel_data = interpolate_velocity_noise(dbz_data, vel_data)
-
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
 
