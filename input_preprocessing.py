@@ -67,17 +67,11 @@ def normalise_input(type, matrix):
             print(matrix)
             return False
         normed = (nansafe_matrix - min_val) / (max_val - min_val)
-        if (torch.isnan(normed).any()):
-            print("DBZ HAS NAN")
-            exit()
     elif (type == "RHOHV"):
         #convert nans
         nansafe_matrix = torch.nan_to_num(matrix, nan=1.0)
         #clamp values between 0 and 1
         normed = torch.clamp(nansafe_matrix, 0.0, 1.0)
-        if (torch.isnan(normed).any()):
-            print("RHOHV HAS NAN")
-            exit()
     elif (type == "VEL"): #-1,1
         #convert nans
         nansafe_matrix = torch.nan_to_num(matrix, nan=0.0)
@@ -87,9 +81,6 @@ def normalise_input(type, matrix):
             print("Completely void velocity")
             return False
         normed = torch.clamp(nansafe_matrix / abs_max, -1.0, 1.0)
-        if (torch.isnan(normed).any()):
-            print("DBZ HAS NAN")
-            exit()
     else:
         print("INVALID INPUT TYPE PASSED TO NORMALISE INPUT: " + type + ", EXITING PROCESS")
         exit()
