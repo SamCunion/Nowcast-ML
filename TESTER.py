@@ -82,10 +82,10 @@ with torch.no_grad():
             vel_data = normalise_input("VEL", vel_data)
             rhohv_data = normalise_input("RHOHV", rhohv_data)
 
-            if (isinstance(dbz_data, bool) and dbz_data == False):
-                print("Weird dbz detected")
+            if ((isinstance(dbz_data, bool) and dbz_data == False) or (isinstance(vel_data, bool) and vel_data == False)):
                 nan_detected = True
-                break
+                print("weird dbz or vel matrix detected")
+                break;
 
 
             SPLIT_DBZ.append(dbz_data)
