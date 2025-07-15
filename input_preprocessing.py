@@ -10,6 +10,27 @@ import torch
 import scipy
 import numpy as np
 
+#removes all data where dbz is less than a threshold.
+def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
+    #get new tensors
+    new_dbz = DBZ.clone()
+    new_vel = VEL.clone()
+    new_rho = RHOHV.clone()
+    #calcualte mask, 1s where threshold is not met
+    mask = new_dbz < DBZ_THRESHOLD
+    #set values where threshold is not met to nan
+    new_dbz[mask] = float("nan")
+    new_vel[mask] = float("nan")
+    new_rho[mask] = float("nan")
+    #return new tensors
+    return new_dbz, new_vel, new_rho
+
+#removes sidelobe artefacts where velocity is set to -64.5 for some reason.
+def remove_sidelobe_artefacts(VEL):
+    new_vel = VEL.clone()
+    new_vel[new_vel == -64.5] = float("nan")
+    return new_vel
+
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
 def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
     device = VEL.device
@@ -26,27 +47,12 @@ def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
     kernel /= kernel.sum()
     kernel = kernel.view(1, 1, kernel_size, kernel_size)
 
-    #performs convolution on the velocity and the dbz weights
+    #performs convolution on the velocity to smooth
     smoothed_velocity = torch.nn.functional.conv2d(filled_vel, kernel, padding=kernel_size // 2)
 
     out = VEL.clone()
     out[0][mask[0]] = smoothed_velocity.squeeze(0)[mask[0]]
     return out
-
-#removes all data where dbz is less than a threshold.
-def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
-    #get new tensors
-    new_dbz = DBZ.clone()
-    new_vel = VEL.clone()
-    new_rho = RHOHV.clone()
-    #calcualte mask, 1s where threshold is not met
-    mask = new_dbz < DBZ_THRESHOLD
-    #set values where threshold is not met to nan
-    new_dbz[mask] = float("nan")
-    new_vel[mask] = float("nan")
-    new_rho[mask] = float("nan")
-    #return new tensors
-    return new_dbz, new_vel, new_rho
 
 #Normalises matrix values between 0,1 for DBZ, RHOHV, between -1,1 for VEL. also converts NAN to 0
 def normalise_input(type, matrix):
