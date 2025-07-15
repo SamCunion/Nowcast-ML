@@ -45,23 +45,24 @@ if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rh
     print("NANITEM!")
     print(batch["ef_number"][index])
 
+#discard data where DBZ is less than a threshold (default 20)
+dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
+display_data(dbz_data, vel_data, rhohv_data, ef_number, "Reduced to DBZ threshold")
+
 #interpolate noisy velocity data
 vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
-#discard data where DBZ is less than a threshold (default 20)
-filtered_dbz, filtered_vel, filtered_rhohv = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
-display_data(filtered_dbz, filtered_vel, filtered_rhohv, ef_number, "Reduced to DBZ threshold")
 
 #normalise the inputs
-norm_dbz = normalise_input("DBZ", filtered_dbz)
-norm_vel = normalise_input("VEL", filtered_vel)
-norm_rhohv = normalise_input("RHOHV", filtered_rhohv)
+dbz_data = normalise_input("DBZ", dbz_data)
+vel_data = normalise_input("VEL", vel_data)
+rhohv_data = normalise_input("RHOHV", rhohv_data)
 
-display_data(norm_dbz, norm_vel, norm_rhohv, ef_number, "Inputs normalised")
+display_data(dbz_data, vel_data, rhohv_data, ef_number, "Inputs normalised")
 
-if (isinstance(norm_dbz, bool) and norm_dbz == False):
+if (isinstance(dbz_data, bool) and dbz_data == False):
     nan_detected = True
     print("weird dbz matrix detected")
     print(batch["ef_number"][index])
