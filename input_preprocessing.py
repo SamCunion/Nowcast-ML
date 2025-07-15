@@ -14,7 +14,7 @@ import numpy as np
 def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
     device = VEL.device
     #mask where velocity is NAN and DBZ exists
-    mask = torch.isnan(VEL) & DBZ > 10
+    mask = torch.isnan(VEL) & ~torch.isnan(DBZ)
     #nan removed velocity for smoothing purposes
     filled_vel = torch.nan_to_num(VEL, nan=0.0)
 
