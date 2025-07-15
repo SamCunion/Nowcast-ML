@@ -4,7 +4,6 @@
 #identify velocity gates function
 #shrink matrices to 50x50 around point function
 #rotate matrice around true north instead of radar direction?
-#recognise extreme values in velocity, and replace them with something more sensible?
 
 import torch
 import scipy
@@ -28,7 +27,7 @@ def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
 #removes sidelobe artefacts where velocity is set to -64.5 for some reason.
 def remove_sidelobe_artefacts(VEL):
     new_vel = VEL.clone()
-    new_vel[abs(new_vel) > 64.0] = float("nan")
+    new_vel[abs(new_vel) >= 64.0] = float("nan")
     return new_vel
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
@@ -89,32 +88,3 @@ def normalise_input(type, matrix):
         exit()
     return normed
 
-
-#testing
-if __name__ == "__main__":
-    from load_dataset import get_torcast_dataloader
-    dl = get_torcast_dataloader("test", 1, 1)
-    for batch in dl:
-        print(batch)
-        batch_size = len(batch)
-        #split batch before processing
-        BATCH_DBZ = batch["DBZ"][...,0]
-        BATCH_VEL = batch["VEL"][...,0]
-        BATCH_RHOHV = batch["RHOHV"][...,0]
-
-        dbz_data = BATCH_DBZ[0] #individual dbz input
-        vel_data = BATCH_VEL[0] #individual vel input
-        rhohv_data = BATCH_RHOHV[0] #individual rhohv input
-
-        norm_dbz = normalise_input("DBZ", dbz_data)
-        norm_vel = normalise_input("VEL", vel_data)
-        norm_rhohv = normalise_input("RHOHV", rhohv_data)
-
-        print("DBZ normalised:")
-        print(norm_dbz)
-        print("VEL normalsied:")
-        print(norm_vel)
-        print("RHOHV Normalised:")
-        print(norm_rhohv)
-            
-        break

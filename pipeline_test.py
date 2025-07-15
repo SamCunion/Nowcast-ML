@@ -49,6 +49,7 @@ if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rh
 dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Reduced to DBZ threshold")
 
+#remove sidelobe artefacts
 vel_data = remove_sidelobe_artefacts(vel_data)
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Removed velocity artefacts")
 

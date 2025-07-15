@@ -4,7 +4,7 @@ import time
 import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML import TorCastML
-from input_preprocessing import normalise_input, interpolate_velocity_noise
+from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, remove_sidelobe_artefacts
 
 #entry
 print("TorCast trainer module")
@@ -65,21 +65,28 @@ for epoch in range(NUM_EPOCHS):
                 nan_detected = True
                 break;
 
+            #discard data where DBZ is less than a threshold (default 20)
+            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
+
+            #remove sidelobe artefacts
+            vel_data = remove_sidelobe_artefacts(vel_data)
+            
             #interpolate noisy velocity data
-            vel_data = interpolate_velocity_noise(dbz_data, vel_data).to(DEVICE)
+            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 
-            norm_dbz = normalise_input("DBZ", dbz_data)
-            norm_vel = normalise_input("VEL", vel_data)
-            norm_rhohv = normalise_input("RHOHV", rhohv_data)
+            #normalise the inputs
+            dbz_data = normalise_input("DBZ", dbz_data)
+            vel_data = normalise_input("VEL", vel_data)
+            rhohv_data = normalise_input("RHOHV", rhohv_data)
 
-            if (isinstance(norm_dbz, bool) and norm_dbz == False):
+            if (isinstance(dbz_data, bool) and dbz_data == False):
                 nan_detected = True
                 print("weird dbz matrix detected")
                 break;
 
-            SPLIT_DBZ.append(norm_dbz)
-            SPLIT_VEL.append(norm_vel)
-            SPLIT_RHOHV.append(norm_rhohv)
+            SPLIT_DBZ.append(dbz_data)
+            SPLIT_VEL.append(vel_data)
+            SPLIT_RHOHV.append(rhohv_data)
         
         if (nan_detected): #discard the batch to prevent dirty data
             print("BATCH CONTAINED ALL NAN DATA!")
