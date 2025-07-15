@@ -11,14 +11,12 @@ import scipy
 import numpy as np
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
-def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
+def interpolate_velocity_noise(VEL, SIGMA=2.0):
     device = VEL.device
     #mask where velocity is NAN and DBZ > threshold
-    mask = torch.isnan(VEL) & (DBZ > DBZ_THRESHOLD)
+    mask = torch.isnan(VEL)
     #nan removed velocity for smoothing purposes
     filled_vel = torch.nan_to_num(VEL, nan=0.0)
-    #weights to remove data where reflectivity is lower than the threshold from consideration
-    weighted_reflectivity = (DBZ > DBZ_THRESHOLD).float()
 
     #gaussian kernel, for convolution in 2 dimensions
     kernel_size = int(6 * SIGMA + 1)
@@ -28,18 +26,11 @@ def interpolate_velocity_noise(DBZ, VEL, DBZ_THRESHOLD=20, SIGMA=2.0):
     kernel /= kernel.sum()
     kernel = kernel.view(1, 1, kernel_size, kernel_size)
 
-    #gets masks velocity only where reflectivity is sufficcient
-    velocity = (filled_vel * weighted_reflectivity).unsqueeze(0)
-    dbz = weighted_reflectivity.unsqueeze(0)
-
     #performs convolution on the velocity and the dbz weights
-    smoothed_velocity = torch.nn.functional.conv2d(velocity, kernel, padding=kernel_size // 2)
-    smoothed_dbz = torch.nn.functional.conv2d(dbz, kernel, padding=kernel_size // 2)
-    #higher DBZ has more influence on smoothed velocity
-    combined = smoothed_velocity.squeeze() / (smoothed_dbz.squeeze() + 1e-6)
+    smoothed_velocity = torch.nn.functional.conv2d(filled_vel, kernel, padding=kernel_size // 2)
 
     out = VEL.clone()
-    out[0][mask[0]] = combined[mask[0]]
+    out[0][mask[0]] = smoothed_velocity.squeeze(0)[mask[0]]
     return out
 
 #removes all data where dbz is less than a threshold.

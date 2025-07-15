@@ -50,7 +50,7 @@ dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rho
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Reduced to DBZ threshold")
 
 #interpolate noisy velocity data
-vel_data = interpolate_velocity_noise(dbz_data, vel_data)
+vel_data = interpolate_velocity_noise(vel_data)
 
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
