@@ -4,7 +4,7 @@ import matplotlib.pyplot as plot
 from tornet.display.display import plot_grid, get_cmap
 import random
 from load_dataset import get_torcast_dataloader
-from input_preprocessing import normalise_input, interpolate_velocity_noise
+from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold
 
 def display_data(DBZ, VEL, RHOHV, EF_rating, title):
     figure = plot.figure(figsize=(12, 4))
@@ -50,10 +50,14 @@ vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
+#discard data where DBZ is less than a threshold (default 20)
+filtered_dbz, filtered_vel, filtered_rhohv = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
+display_data(filtered_dbz, filtered_vel, filtered_rhohv, ef_number, "Reduced to DBZ threshold")
+
 #normalise the inputs
-norm_dbz = normalise_input("DBZ", dbz_data)
-norm_vel = normalise_input("VEL", vel_data)
-norm_rhohv = normalise_input("RHOHV", rhohv_data)
+norm_dbz = normalise_input("DBZ", filtered_dbz)
+norm_vel = normalise_input("VEL", filtered_vel)
+norm_rhohv = normalise_input("RHOHV", filtered_rhohv)
 
 display_data(norm_dbz, norm_vel, norm_rhohv, ef_number, "Inputs normalised")
 
