@@ -11,10 +11,10 @@ import scipy
 import numpy as np
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
-def interpolate_velocity_noise(VEL, SIGMA=2.0):
+def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
     device = VEL.device
-    #mask where velocity is NAN and DBZ > threshold
-    mask = torch.isnan(VEL)
+    #mask where velocity is NAN and DBZ exists
+    mask = torch.isnan(VEL) & DBZ > 10
     #nan removed velocity for smoothing purposes
     filled_vel = torch.nan_to_num(VEL, nan=0.0)
 
