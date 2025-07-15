@@ -81,6 +81,7 @@ def normalise_input(type, matrix):
         abs_max = torch.max(torch.abs(nansafe_matrix))
         if (abs_max == 0):
             print("Completely void velocity")
+            return False
         normed = torch.clamp(nansafe_matrix / abs_max, -1.0, 1.0)
     else:
         print("INVALID INPUT TYPE PASSED TO NORMALISE INPUT: " + type + ", EXITING PROCESS")
