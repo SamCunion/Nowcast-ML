@@ -28,7 +28,7 @@ def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
 #removes sidelobe artefacts where velocity is set to -64.5 for some reason.
 def remove_sidelobe_artefacts(VEL):
     new_vel = VEL.clone()
-    new_vel[new_vel == -64.5] = float("nan")
+    new_vel[abs(new_vel) > 64.0] = float("nan")
     return new_vel
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
