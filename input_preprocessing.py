@@ -80,8 +80,7 @@ def normalise_input(type, matrix):
         #get the highest wind speed (in either direction), which will be represented by -1.0 and 1.0. all values then fall between these extremes
         abs_max = torch.max(torch.abs(nansafe_matrix))
         if (abs_max == 0):
-            print("AHA THERE WE GO")
-            exit()
+            print("Completely void velocity")
         normed = torch.clamp(nansafe_matrix / abs_max, -1.0, 1.0)
     else:
         print("INVALID INPUT TYPE PASSED TO NORMALISE INPUT: " + type + ", EXITING PROCESS")
