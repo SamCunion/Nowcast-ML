@@ -6,7 +6,7 @@ import os
 from load_dataset import get_torcast_dataloader
 from sklearn import metrics
 from collections import Counter
-from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, remove_sidelobe_artefacts
+from input_preprocessing import preprocessing_pipeline
 
 #constants
 MODEL_PATH = "./saved_models/" #saved models directory
@@ -57,44 +57,20 @@ with torch.no_grad():
         SPLIT_VEL = []
         SPLIT_RHOHV = []
 
-        nan_detected = False
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
             vel_data = BATCH_VEL[i] #individual vel input
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
 
-            #is one of the inputs filled with nans? red alert!
-            if (torch.isnan(dbz_data).all() or torch.isnan(vel_data).all() or torch.isnan(rhohv_data).all()):
-                nan_detected = True
-                break
+            matrices = preprocessing_pipeline(dbz_data, vel_data, rhohv_data)
+            if (isinstance(matrices, bool) and matrices == False):
+                #invalid, just skip this item in the batch
+                continue
 
-            #discard data where DBZ is less than a threshold (default 20)
-            dbz_data, vel_data, rhohv_data = reduce_to_dbz_threshold(dbz_data, vel_data, rhohv_data)
-
-            #remove sidelobe artefacts
-            vel_data = remove_sidelobe_artefacts(vel_data)
-            
-            #interpolate noisy velocity data
-            vel_data = interpolate_velocity_noise(dbz_data, vel_data)
-
-            #normalise the inputs
-            dbz_data = normalise_input("DBZ", dbz_data)
-            vel_data = normalise_input("VEL", vel_data)
-            rhohv_data = normalise_input("RHOHV", rhohv_data)
-
-            if ((isinstance(dbz_data, bool) and dbz_data == False) or (isinstance(vel_data, bool) and vel_data == False)):
-                nan_detected = True
-                print("weird dbz or vel matrix detected")
-                break;
-
-
-            SPLIT_DBZ.append(dbz_data)
-            SPLIT_VEL.append(vel_data)
-            SPLIT_RHOHV.append(rhohv_data)
+            SPLIT_DBZ.append(matrices[0])
+            SPLIT_VEL.append(matrices[1])
+            SPLIT_RHOHV.append(matrices[2])
         
-        if (nan_detected): #discard the batch to prevent dirty data
-            print("BATCH CONTAINED ALL NAN DATA!")
-            continue
         
         #merge batch again
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)

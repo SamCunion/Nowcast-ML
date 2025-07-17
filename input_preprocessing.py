@@ -86,3 +86,29 @@ def normalise_input(type, matrix):
         exit()
     return normed
 
+def preprocessing_pipeline(DBZ, VEL, RHOHV):
+
+    #reject if filled with nans
+    if (torch.isnan(DBZ).all() or torch.isnan(VEL).all() or torch.isnan(RHOHV).all()):
+        print("DBZ, VEL or RHOHV matrix filled entirely with nan: rejected")
+        return False
+
+    #trehsold all 3 inputs yb DBZ
+    DBZ, VEL, RHOHV = reduce_to_dbz_threshold(DBZ, VEL, RHOHV)
+
+    #remove erroneous sidelobe values
+    VEL = remove_sidelobe_artefacts(VEL)
+
+    #gaussian smooth velocity data
+    VEL = interpolate_velocity_noise(DBZ, VEL)
+
+    #normalise the inputs
+    DBZ = normalise_input("DBZ", DBZ)
+    VEL = normalise_input("VEL", VEL)
+    RHOHV = normalise_input("RHOHV", RHOHV)
+
+    if (isinstance(DBZ, bool) and DBZ == False):
+        print("DBZ, VEL, or RHOHV matrix rejected, most likely either extremely low DBZ across the board, or VEL only in one direction")
+        return False
+    
+    return DBZ, VEL, RHOHV
