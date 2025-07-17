@@ -53,14 +53,20 @@ with torch.no_grad():
         BATCH_DBZ = batch["DBZ"][...,0]
         BATCH_VEL = batch["VEL"][...,0]
         BATCH_RHOHV = batch["RHOHV"][...,0]
+        BATCH_LABEL = batch["label"].squeeze().bool()
+        BATCH_EF = batch["ef_number"].squeeze().long()
         SPLIT_DBZ = []
         SPLIT_VEL = []
         SPLIT_RHOHV = []
+        SPLIT_LABEL = []
+        SPLIT_EF = []
 
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
             vel_data = BATCH_VEL[i] #individual vel input
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
+            label_data = BATCH_LABEL[i] #individual label
+            ef_data = BATCH_EF[i] #individual ef number
 
             matrices = preprocessing_pipeline(dbz_data, vel_data, rhohv_data)
             if (isinstance(matrices, bool) and matrices == False):
@@ -70,26 +76,28 @@ with torch.no_grad():
             SPLIT_DBZ.append(matrices[0])
             SPLIT_VEL.append(matrices[1])
             SPLIT_RHOHV.append(matrices[2])
+            SPLIT_LABEL.append(label_data)
+            SPLIT_EF.append(ef_data)
         
         
         #merge batch again
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
         VEL = torch.stack(SPLIT_VEL).to(DEVICE)
         RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
-        label = batch["label"].cpu().numpy().squeeze().astype(int)
-        ef_number = batch["ef_number"].cpu().numpy().squeeze().astype(int)
+        labels = SPLIT_LABEL.cpu().numpy().squeeze().astype(bool)
+        ef_numbers = SPLIT_EF.cpu().numpy().squeeze().astype(int)
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
 
         batch_tor_probs = torch.sigmoid(prob)
         batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).int().view(-1).cpu().numpy()
         tor_prob_predictions.extend(batch_tor_predictions)
-        tor_prob_truths.extend(label.astype(int))
+        tor_prob_truths.extend(labels)
 
         batch_strength_probs = torch.softmax(class_logits, dim=1)
         batch_strength_predictions = torch.argmax(batch_strength_probs, dim=1).cpu().numpy()
         tor_strength_predictions.extend(batch_strength_predictions)
-        tor_strength_truths.extend(ef_number + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
+        tor_strength_truths.extend(ef_numbers + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
         #update visual
         batches_trained += 1
