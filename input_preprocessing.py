@@ -62,9 +62,6 @@ def normalise_input(type, matrix):
         min_val = torch.min(nansafe_matrix)
         max_val = torch.max(nansafe_matrix)
         if (min_val == max_val):
-            print(min_val)
-            print(max_val)
-            print(matrix)
             return False
         normed = (nansafe_matrix - min_val) / (max_val - min_val)
     elif (type == "RHOHV"):
@@ -78,7 +75,6 @@ def normalise_input(type, matrix):
         #get the highest wind speed (in either direction), which will be represented by -1.0 and 1.0. all values then fall between these extremes
         abs_max = torch.max(torch.abs(nansafe_matrix))
         if (abs_max == 0):
-            print("Completely void velocity")
             return False
         normed = torch.clamp(nansafe_matrix / abs_max, -1.0, 1.0)
     else:
@@ -107,7 +103,7 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
     VEL = normalise_input("VEL", VEL)
     RHOHV = normalise_input("RHOHV", RHOHV)
 
-    if (isinstance(DBZ, bool) and DBZ == False):
+    if ((isinstance(DBZ, bool) and DBZ == False) or (isinstance(VEL, bool) and VEL == False) or (isinstance(RHOHV, bool) and RHOHV == False)):
         print("DBZ, VEL, or RHOHV matrix rejected, most likely either extremely low DBZ across the board, or VEL only in one direction")
         return False
     
