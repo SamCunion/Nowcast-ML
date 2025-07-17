@@ -53,7 +53,7 @@ with torch.no_grad():
         BATCH_DBZ = batch["DBZ"][...,0]
         BATCH_VEL = batch["VEL"][...,0]
         BATCH_RHOHV = batch["RHOHV"][...,0]
-        BATCH_LABEL = batch["label"].squeeze().bool()
+        BATCH_LABEL = batch["label"].squeeze().int()
         BATCH_EF = batch["ef_number"].squeeze().long()
         SPLIT_DBZ = []
         SPLIT_VEL = []
@@ -84,7 +84,7 @@ with torch.no_grad():
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
         VEL = torch.stack(SPLIT_VEL).to(DEVICE)
         RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
-        labels = SPLIT_LABEL.cpu().numpy().squeeze().astype(bool)
+        labels = SPLIT_LABEL.cpu().numpy().squeeze().astype(int)
         ef_numbers = SPLIT_EF.cpu().numpy().squeeze().astype(int)
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
