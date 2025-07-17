@@ -84,8 +84,8 @@ with torch.no_grad():
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
         VEL = torch.stack(SPLIT_VEL).to(DEVICE)
         RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
-        labels = SPLIT_LABEL.squeeze().astype(float)
-        ef_numbers = SPLIT_EF.squeeze().astype(int)
+        labels = [val.item() for val in SPLIT_LABEL]
+        ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
 
@@ -97,7 +97,7 @@ with torch.no_grad():
         batch_strength_probs = torch.softmax(class_logits, dim=1)
         batch_strength_predictions = torch.argmax(batch_strength_probs, dim=1).cpu().numpy()
         tor_strength_predictions.extend(batch_strength_predictions)
-        tor_strength_truths.extend(ef_numbers + 1) #+1 because we're converting -1 - 5 to 0 - 6 indexes
+        tor_strength_truths.extend(ef_numbers) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
         #update visual
         batches_trained += 1

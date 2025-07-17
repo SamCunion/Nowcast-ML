@@ -28,9 +28,7 @@ data_loader = get_torcast_dataloader("train", 32, 10)
 print("Running TorCast Trainer Module")
 
 model = TorCastML().to(DEVICE)
-model.train()
 optimizer = torch.optim.Adam(model.parameters())
-optimizer.zero_grad()
 loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
 loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
 
@@ -38,6 +36,7 @@ print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
 process_start_time = time.time()
 for epoch in range(NUM_EPOCHS):
     print("Starting epoch " + str(epoch) + "/" + str(NUM_EPOCHS) + "...")
+    model.train()
     no_batches = len(data_loader)
     batches_trained = 0
     epoch_start_time = time.time()
@@ -84,6 +83,8 @@ for epoch in range(NUM_EPOCHS):
         RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
         LABELS = torch.stack(SPLIT_LABEL).to(DEVICE)
         EF_NUMBERS = torch.stack(SPLIT_EF).to(DEVICE)
+
+        optimizer.zero_grad()
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
         
