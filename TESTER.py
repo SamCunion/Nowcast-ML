@@ -84,8 +84,8 @@ with torch.no_grad():
         DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
         VEL = torch.stack(SPLIT_VEL).to(DEVICE)
         RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
-        labels = SPLIT_LABEL.cpu().numpy().squeeze().astype(int)
-        ef_numbers = SPLIT_EF.cpu().numpy().squeeze().astype(int)
+        labels = SPLIT_LABEL.squeeze().astype(float)
+        ef_numbers = SPLIT_EF.squeeze().astype(int)
 
         prob, class_logits = model(DBZ, VEL, RHOHV)
 
