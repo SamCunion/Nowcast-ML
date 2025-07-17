@@ -53,7 +53,7 @@ with torch.no_grad():
         BATCH_DBZ = batch["DBZ"][...,0]
         BATCH_VEL = batch["VEL"][...,0]
         BATCH_RHOHV = batch["RHOHV"][...,0]
-        BATCH_LABEL = batch["label"].squeeze().int()
+        BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
         SPLIT_DBZ = []
         SPLIT_VEL = []
