@@ -24,10 +24,33 @@ def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
     #return new tensors
     return new_dbz, new_vel, new_rho
 
-#removes sidelobe artefacts where velocity is set to -64.5 for some reason.
-def remove_sidelobe_artefacts(VEL):
+#removes artefacts where the absolute value of a datapoint is more than their 4 nearest neighbours combined. If so, replaces it with the average of its 4 nearest neighbours
+def detect_and_smooth_spikes(VEL):
     new_vel = VEL.clone()
-    new_vel[abs(new_vel) >= 64.0] = float("nan")
+    height, width = VEL.shape
+    
+    #pad so edges work
+    padded = torch.nn.functional.pad(VEL.unsqueeze(0).unsqueeze(0), (1, 1, 1, 1), mode="replicate").squeeze()
+
+    #non-absolute neighbour values
+    up = padded[0:height, 1:width + 1]
+    down = padded[2:height + 2, 1:width + 1]
+    left = padded[1:height + 1, 0:width]
+    right = padded[1:height + 1, 2: width + 2]
+
+    #absolute values for the base matrix, and the sum of each datapoints 4 nearest neighbours
+    input_abs = torch.abs(VEL)
+    neighbour_sums = torch.abs(up) + torch.abs(down) + torch.abs(left) + torch.abs(right)
+
+    #these values hold the average value of each datapoints nearest neighbours
+    true_neighbour_average = (up + down + left + right) / 4
+
+    #mask for each datapoint that has higher abs value than neighbours abs values 
+    spike_mask = input_abs >= neighbour_sums
+
+    #replaces the found datapoints with their nearest neighbour computed average
+    new_vel[spike_mask] = true_neighbour_average[spike_mask]
+
     return new_vel
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
@@ -93,7 +116,7 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
     DBZ, VEL, RHOHV = reduce_to_dbz_threshold(DBZ, VEL, RHOHV)
 
     #remove erroneous sidelobe values
-    VEL = remove_sidelobe_artefacts(VEL)
+    VEL = detect_and_smooth_spikes(VEL)
 
     #gaussian smooth velocity data
     VEL = interpolate_velocity_noise(DBZ, VEL)
