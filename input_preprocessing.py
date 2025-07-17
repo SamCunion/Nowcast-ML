@@ -26,11 +26,12 @@ def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
 
 #removes artefacts where the absolute value of a datapoint is more than their 4 nearest neighbours combined. If so, replaces it with the average of its 4 nearest neighbours
 def detect_and_smooth_spikes(VEL):
-    new_vel = VEL.clone()
-    height, width = VEL.shape
+    new_vel = VEL.clone().squeeze()
+    nand = torch.nan_to_num(new_vel, nan=0.0)
+    height, width = new_vel.shape
     
     #pad so edges work
-    padded = torch.nn.functional.pad(VEL.unsqueeze(0).unsqueeze(0), (1, 1, 1, 1), mode="replicate").squeeze()
+    padded = torch.nn.functional.pad(nand.unsqueeze(0).unsqueeze(0), (1, 1, 1, 1), mode="replicate").squeeze()
 
     #non-absolute neighbour values
     up = padded[0:height, 1:width + 1]
@@ -39,19 +40,19 @@ def detect_and_smooth_spikes(VEL):
     right = padded[1:height + 1, 2: width + 2]
 
     #absolute values for the base matrix, and the sum of each datapoints 4 nearest neighbours
-    input_abs = torch.abs(VEL)
+    input_abs = torch.abs(nand)
     neighbour_sums = torch.abs(up) + torch.abs(down) + torch.abs(left) + torch.abs(right)
 
     #these values hold the average value of each datapoints nearest neighbours
     true_neighbour_average = (up + down + left + right) / 4
 
     #mask for each datapoint that has higher abs value than neighbours abs values 
-    spike_mask = input_abs >= neighbour_sums
+    spike_mask = input_abs > neighbour_sums
 
     #replaces the found datapoints with their nearest neighbour computed average
     new_vel[spike_mask] = true_neighbour_average[spike_mask]
 
-    return new_vel
+    return new_vel.unsqueeze(0)
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
 def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):

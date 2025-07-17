@@ -31,7 +31,7 @@ def display_data(DBZ, VEL, RHOHV, EF_rating, title):
 
 data_loader = get_torcast_dataloader("train", 64, 10)
 batch = next(iter(data_loader))
-index = random.randint(0, 63)
+index = 45#random.randint(0, 63)
 
 dbz_data = batch["DBZ"][...,0][index]
 vel_data = batch["VEL"][...,0][index]
