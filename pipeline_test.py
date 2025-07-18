@@ -6,7 +6,7 @@ import random
 from load_dataset import get_torcast_dataloader
 from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, detect_and_smooth_spikes, generate_feature_mask
 
-def display_data(DBZ, VEL, RHOHV, EF_rating, title):
+def display_data(DBZ, VEL, RHOHV, EF_rating, title, mask=None):
     figure = plot.figure(figsize=(12, 4))
     cmapv, normv = get_cmap("vel")
     cmapd, normd = get_cmap("dbz")
@@ -27,6 +27,12 @@ def display_data(DBZ, VEL, RHOHV, EF_rating, title):
     ax3.set_xticklabels([])
     ax3.set_yticklabels([])
     figure.text(.5, .05, title + ", EF: " + str(EF_rating), ha="center")
+    #show mask?
+    if (mask != None):
+        ax1.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
+        ax2.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
+        ax3.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
+
     plot.show()
 
 data_loader = get_torcast_dataloader("train", 64, 10)
@@ -59,7 +65,7 @@ display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
 #attempt shrinking input size by TDA
 mask = generate_feature_mask(dbz_data, vel_data, rhohv_data)[3]
-display_data(dbz_data, vel_data, mask, ef_number, "Applied TDA")
+display_data(dbz_data, vel_data, mask, ef_number, "Applied TDA", mask=mask)
 
 #normalise the inputs
 dbz_data = normalise_input("DBZ", dbz_data)
