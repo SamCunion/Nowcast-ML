@@ -106,19 +106,27 @@ def normalise_input(type, matrix):
         exit()
     return normed
 
-def attempt_shrink_by_tda(DBZ, VEL, RHOHV):
+#generates a feature mask, which indicates the most important parts of the scan the model should pay attention to.
+#uses a simplified version of the TDA to identify velocity couplets, builds bouding boxes around their centre point, and constructs a mask around them
+#if too many couplets are found (could be on a boundary), or too few (0), instead masks the entire storm (not including low DBZ areas)
+def generate_feature_mask(DBZ, VEL, RHOHV, DBZ_THRESHOLD=10):
     couplets = find_velocity_couplets(VEL)
     no_couplets = len(couplets)
     if (no_couplets == 0 or no_couplets > 8):
-        #default to full scan
-        return DBZ, VEL, RHOHV
+        #default to full scan, construct mask by dbz threshold
+        MASK = DBZ > DBZ_THRESHOLD
+        return DBZ, VEL, RHOHV, MASK
     
-    #continue with the feature reduction
-    crop_list = extract_crops_by_centroid(DBZ, VEL, RHOHV, couplets)
-    print(len(crop_list))
+    #gets bounding box (X,Y,W,H) around centroids
+    bb_list = centroid_to_bounding_box(couplets)
+    #construct mask for centroids
+    MASK = construct_bounding_box_mask(bb_list)
+    #clip low dbz values from the bounding boxes
+    MASK[DBZ < DBZ_THRESHOLD] = 0
+    return DBZ, VEL, RHOHV, MASK
     
 
-
+#implements a simplified version of TDA, where we only care about opposing intense velocity values, in one dimension
 def find_velocity_couplets(VEL, SHEAR_THRESHOLD=35.0):
     nand_vel = torch.nan_to_num(VEL.squeeze(), nan=0.0)
     #shifts in one direction, minus shift in other direction to get couplet shear
@@ -132,34 +140,30 @@ def find_velocity_couplets(VEL, SHEAR_THRESHOLD=35.0):
     rngs = rngs + 1
     return list(zip(rngs.tolist(), azs.tolist()))
 
-def extract_crops_by_centroid(DBZ, VEL, RHOHV, CENTROIDS, CROP_DIMS=(50, 50)):
-    shape = DBZ.shape
-    cropped = []
+#constructs bounding boxes centred on the centroids of the identified velocity gates
+def centroid_to_bounding_box(CENTROIDS, CROP_DIMS=(50, 50)):
+    boxes = []
     for centroid in CENTROIDS:
         #RNG and AZ index of the center of rotation within the overall scan
         rng, az = centroid
 
         #calculate bounding box of crop
         rng_min = max(rng - CROP_DIMS[0] // 2, 0)
-        rng_max = min(rng_min + CROP_DIMS[0], shape[1])
+        rng_max = min(rng_min + CROP_DIMS[0], 120)
         az_min = max(az - CROP_DIMS[1] // 2, 0)
-        az_max = min(az_min + CROP_DIMS[1], shape[2])
+        az_max = min(az_min + CROP_DIMS[1], 240)
 
-        #construct new cropped tensor for each input type
-        DBZ_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
-        VEL_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
-        RHO_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
+        boxes.append([rng_min, rng_max, az_min, az_max])
+    return boxes
 
-        #copy across the data from within the bounding box region to the new tensor
-        DBZ_Crop[:, :rng_max - rng_min, :az_max - az_min] = DBZ[:, rng_min:rng_max, az_min:az_max]
-        VEL_Crop[:, :rng_max - rng_min, :az_max - az_min] = VEL[:, rng_min:rng_max, az_min:az_max]
-        RHO_Crop[:, :rng_max - rng_min, :az_max - az_min] = RHOHV[:, rng_min:rng_max, az_min:az_max]
-
-        cropped.append([DBZ_Crop, VEL_Crop, RHO_Crop])
+#using a list of bounding boxes, constructs a mask where 1 indicates a data value within a bounding box, and 0s are outside.
+def construct_bounding_box_mask(bb_list):
+    mask = torch.zeros(120, 240, dtype=torch.uint8) #hardcoded, will need change if input size varies
+    for rngmin, rngmax, azmin, azmax in bb_list:
+        #for every bounding box, set values between min,max for both dimensions to 1
+        mask[rngmin:rngmax, azmin:azmax] = 1
     
-    #return a list of the 3 types of input type, for each centroid
-    return cropped
-
+    return mask
 
 def preprocessing_pipeline(DBZ, VEL, RHOHV):
 
@@ -177,8 +181,8 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
     #gaussian smooth velocity data
     VEL = interpolate_velocity_noise(DBZ, VEL)
 
-    #find velocity couplets, and shrink if needs be
-    attempt_shrink_by_tda(DBZ, VEL, RHOHV)
+    #find velocity couplets
+    DBZ, VEL, RHOHV, MASK = generate_feature_mask(DBZ, VEL, RHOHV)
 
     #normalise the inputs
     DBZ = normalise_input("DBZ", DBZ)
@@ -189,4 +193,4 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
         print("DBZ, VEL, or RHOHV matrix rejected, most likely either extremely low DBZ across the board, or VEL only in one direction")
         return False
     
-    return DBZ, VEL, RHOHV
+    return DBZ, VEL, RHOHV, MASK

@@ -70,9 +70,14 @@ for epoch in range(NUM_EPOCHS):
                 #invalid, just skip this item in the batch
                 continue
 
-            SPLIT_DBZ.append(matrices[0])
-            SPLIT_VEL.append(matrices[1])
-            SPLIT_RHOHV.append(matrices[2])
+            #combine input matrices with the computed feature mask
+            MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
+            MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
+            MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+
+            SPLIT_DBZ.append(MASKED_DBZ)
+            SPLIT_VEL.append(MASKED_VEL)
+            SPLIT_RHOHV.append(MASKED_RHOHV)
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
         
