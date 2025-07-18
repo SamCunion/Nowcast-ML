@@ -4,7 +4,7 @@ import matplotlib.pyplot as plot
 from tornet.display.display import plot_grid, get_cmap
 import random
 from load_dataset import get_torcast_dataloader
-from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, detect_and_smooth_spikes, generate_feature_mask
+from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, detect_and_smooth_spikes, generate_feature_mask, remove_extreme_artefacts
 
 def display_data(DBZ, VEL, RHOHV, EF_rating, title, mask=None):
     figure = plot.figure(figsize=(12, 4))
@@ -60,6 +60,9 @@ display_data(dbz_data, vel_data, rhohv_data, ef_number, "Reduced to DBZ threshol
 #remove sidelobe artefacts
 vel_data = detect_and_smooth_spikes(vel_data)
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Removed velocity artefacts")
+
+vel_data = remove_extreme_artefacts(vel_data)
+display_data(dbz_data, vel_data, rhohv_data, ef_number, "Removed extreme velocity values")
 
 #interpolate noisy velocity data
 vel_data = interpolate_velocity_noise(dbz_data, vel_data)

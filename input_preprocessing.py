@@ -55,6 +55,12 @@ def detect_and_smooth_spikes(VEL):
 
     return new_vel.unsqueeze(0)
 
+#removes extreme velocity values, could hinder so maybe remove if not able to detect higher end tornadoes
+def remove_extreme_artefacts(VEL):
+    new_vel = VEL.clone()
+    new_vel[abs(new_vel) >= 64.0] = float("nan")
+    return new_vel
+
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
 def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
     device = VEL.device
@@ -179,6 +185,9 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
 
     #remove erroneous sidelobe values
     VEL = detect_and_smooth_spikes(VEL)
+
+    #remove extreme velocity artefacts
+    VEL = remove_extreme_artefacts(VEL)
 
     #gaussian smooth velocity data
     VEL = interpolate_velocity_noise(DBZ, VEL)
