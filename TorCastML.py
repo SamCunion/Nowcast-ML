@@ -3,7 +3,7 @@ import torch
 import torch.nn as NN
 import torch.nn.functional as FUNCTIONAL
 
-INPUT_CHANNELS = 1 #should always be one, unless stacking input tilts
+INPUT_CHANNELS = 2 #should always be one, unless stacking input tilts
 INPUT_TYPES = 3 #DBZ, VEL, RHOHV
 CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 

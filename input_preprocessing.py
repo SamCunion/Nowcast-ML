@@ -122,7 +122,8 @@ def generate_feature_mask(DBZ, VEL, RHOHV, DBZ_THRESHOLD=10):
     #construct mask for centroids
     MASK = construct_bounding_box_mask(bb_list)
     #clip low dbz values from the bounding boxes
-    MASK[DBZ < DBZ_THRESHOLD] = 0
+    MASK[DBZ.squeeze() < DBZ_THRESHOLD] = 0
+    MASK = MASK.unsqueeze(0)
     return DBZ, VEL, RHOHV, MASK
     
 
