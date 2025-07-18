@@ -111,8 +111,8 @@ def attempt_shrink_by_tda(DBZ, VEL, RHOHV):
     print(len(couplets))
 
 
-def find_velocity_couplets(VEL, SHEAR_THRESHOLD=40.0):
-    nand_vel = torch.nan_to_num(VEL, nan=0.0)
+def find_velocity_couplets(VEL, SHEAR_THRESHOLD=35.0):
+    nand_vel = torch.nan_to_num(VEL.squeeze(), nan=0.0)
     #shifts in one direction, minus shift in other direction to get couplet shear
     shear = nand_vel[:, 1:] - nand_vel[:, :-1]
     #mask for opposing direction
