@@ -59,7 +59,7 @@ display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
 #attempt shrinking input size by TDA
 dbz_data, vel_data, rhohv_data, mask = attempt_shrink_by_tda(dbz_data, vel_data, rhohv_data)
-display_data(dbz_data, vel_data, rhohv_data, ef_number, "Applied TDA")
+display_data(dbz_data, vel_data, mask, ef_number, "Applied TDA")
 
 #normalise the inputs
 dbz_data = normalise_input("DBZ", dbz_data)
