@@ -106,6 +106,24 @@ def normalise_input(type, matrix):
         exit()
     return normed
 
+def attempt_shrink_by_tda(DBZ, VEL, RHOHV):
+    couplets = find_velocity_couplets(VEL)
+    print(len(couplets))
+
+
+def find_velocity_couplets(VEL, SHEAR_THRESHOLD=40.0):
+    nand_vel = torch.nan_to_num(VEL, nan=0.0)
+    #shifts in one direction, minus shift in other direction to get couplet shear
+    shear = nand_vel[:, 1:] - nand_vel[:, :-1]
+    #mask for opposing direction
+    mask = (nand_vel[:, 1:] * nand_vel[:, :-1] < 0)
+    strong_shear_mask = torch.abs(shear) > SHEAR_THRESHOLD
+    #couplet detected where large difference between shear values, and direction
+    velocity_couplet_mask = mask & strong_shear_mask
+    azs, rngs = torch.where(velocity_couplet_mask)
+    rngs = rngs + 1
+    return list(zip(azs.tolist(), rngs.tolist()))
+
 def preprocessing_pipeline(DBZ, VEL, RHOHV):
 
     #reject if filled with nans
@@ -121,6 +139,9 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
 
     #gaussian smooth velocity data
     VEL = interpolate_velocity_noise(DBZ, VEL)
+
+    #find velocity couplets, and shrink if needs be
+    attempt_shrink_by_tda(DBZ, VEL, RHOHV)
 
     #normalise the inputs
     DBZ = normalise_input("DBZ", DBZ)
