@@ -8,6 +8,7 @@
 import torch
 import scipy
 import numpy as np
+import math
 
 #removes all data where dbz is less than a threshold.
 def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
@@ -122,7 +123,7 @@ def generate_feature_mask(DBZ, VEL, RHOHV, DBZ_THRESHOLD=10):
     #construct mask for centroids
     MASK = construct_bounding_box_mask(bb_list)
     #clip low dbz values from the bounding boxes
-    MASK[DBZ.squeeze() < DBZ_THRESHOLD] = 0
+    MASK = MASK * (DBZ.squeeze() >= DBZ_THRESHOLD).to(torch.uint8)
     MASK = MASK.unsqueeze(0)
     return DBZ, VEL, RHOHV, MASK
     

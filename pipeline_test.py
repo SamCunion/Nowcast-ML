@@ -29,6 +29,7 @@ def display_data(DBZ, VEL, RHOHV, EF_rating, title, mask=None):
     figure.text(.5, .05, title + ", EF: " + str(EF_rating), ha="center")
     #show mask?
     if (mask != None):
+        mask = mask.squeeze(0)
         ax1.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
         ax2.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
         ax3.imshow(mask, cmap="Purples", alpha=0.3, interpolation="nearest")
@@ -37,7 +38,8 @@ def display_data(DBZ, VEL, RHOHV, EF_rating, title, mask=None):
 
 data_loader = get_torcast_dataloader("train", 64, 10)
 batch = next(iter(data_loader))
-index = 45#random.randint(0, 63)
+index = 30#random.randint(0, 63)
+print(index)
 
 dbz_data = batch["DBZ"][...,0][index]
 vel_data = batch["VEL"][...,0][index]
@@ -63,9 +65,9 @@ display_data(dbz_data, vel_data, rhohv_data, ef_number, "Removed velocity artefa
 vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
-#attempt shrinking input size by TDA
+#generate focus mask
 mask = generate_feature_mask(dbz_data, vel_data, rhohv_data)[3]
-display_data(dbz_data, vel_data, mask, ef_number, "Applied TDA", mask=mask)
+display_data(dbz_data, vel_data, rhohv_data, ef_number, "Applied TDA", mask=mask)
 
 #normalise the inputs
 dbz_data = normalise_input("DBZ", dbz_data)
