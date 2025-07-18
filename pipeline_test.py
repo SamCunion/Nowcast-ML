@@ -4,7 +4,7 @@ import matplotlib.pyplot as plot
 from tornet.display.display import plot_grid, get_cmap
 import random
 from load_dataset import get_torcast_dataloader
-from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, detect_and_smooth_spikes, attempt_shrink_by_tda
+from input_preprocessing import normalise_input, interpolate_velocity_noise, reduce_to_dbz_threshold, detect_and_smooth_spikes, generate_feature_mask
 
 def display_data(DBZ, VEL, RHOHV, EF_rating, title):
     figure = plot.figure(figsize=(12, 4))
@@ -58,7 +58,7 @@ vel_data = interpolate_velocity_noise(dbz_data, vel_data)
 display_data(dbz_data, vel_data, rhohv_data, ef_number, "Interpolated velocity")
 
 #attempt shrinking input size by TDA
-dbz_data, vel_data, rhohv_data, mask = attempt_shrink_by_tda(dbz_data, vel_data, rhohv_data)
+mask = generate_feature_mask(dbz_data, vel_data, rhohv_data)[3]
 display_data(dbz_data, vel_data, mask, ef_number, "Applied TDA")
 
 #normalise the inputs
