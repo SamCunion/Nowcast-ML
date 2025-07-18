@@ -108,21 +108,58 @@ def normalise_input(type, matrix):
 
 def attempt_shrink_by_tda(DBZ, VEL, RHOHV):
     couplets = find_velocity_couplets(VEL)
-    print(len(couplets))
+    no_couplets = len(couplets)
+    if (no_couplets == 0 or no_couplets > 8):
+        #default to full scan
+        return DBZ, VEL, RHOHV
+    
+    #continue with the feature reduction
+    crop_list = extract_crops_by_centroid(DBZ, VEL, RHOHV, couplets)
+    print(len(crop_list))
+    
 
 
 def find_velocity_couplets(VEL, SHEAR_THRESHOLD=35.0):
     nand_vel = torch.nan_to_num(VEL.squeeze(), nan=0.0)
     #shifts in one direction, minus shift in other direction to get couplet shear
-    shear = nand_vel[:, 1:] - nand_vel[:, :-1]
+    shear = nand_vel[1:, :] - nand_vel[:-1, :]
     #mask for opposing direction
-    mask = (nand_vel[:, 1:] * nand_vel[:, :-1] < 0)
+    mask = (nand_vel[1:, :] * nand_vel[:-1, :] < 0)
     strong_shear_mask = torch.abs(shear) > SHEAR_THRESHOLD
     #couplet detected where large difference between shear values, and direction
     velocity_couplet_mask = mask & strong_shear_mask
-    azs, rngs = torch.where(velocity_couplet_mask)
+    rngs, azs = torch.where(velocity_couplet_mask)
     rngs = rngs + 1
-    return list(zip(azs.tolist(), rngs.tolist()))
+    return list(zip(rngs.tolist(), azs.tolist()))
+
+def extract_crops_by_centroid(DBZ, VEL, RHOHV, CENTROIDS, CROP_DIMS=(50, 50)):
+    shape = DBZ.shape
+    cropped = []
+    for centroid in CENTROIDS:
+        #RNG and AZ index of the center of rotation within the overall scan
+        rng, az = centroid
+
+        #calculate bounding box of crop
+        rng_min = max(rng - CROP_DIMS[0] // 2, 0)
+        rng_max = min(rng_min + CROP_DIMS[0], shape[1])
+        az_min = max(az - CROP_DIMS[1] // 2, 0)
+        az_max = min(az_min + CROP_DIMS[1], shape[2])
+
+        #construct new cropped tensor for each input type
+        DBZ_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
+        VEL_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
+        RHO_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
+
+        #copy across the data from within the bounding box region to the new tensor
+        DBZ_Crop[:, :rng_max - rng_min, :az_max - az_min] = DBZ[:, rng_min:rng_max, az_min:az_max]
+        VEL_Crop[:, :rng_max - rng_min, :az_max - az_min] = VEL[:, rng_min:rng_max, az_min:az_max]
+        RHO_Crop[:, :rng_max - rng_min, :az_max - az_min] = RHOHV[:, rng_min:rng_max, az_min:az_max]
+
+        cropped.append([DBZ_Crop, VEL_Crop, RHO_Crop])
+    
+    #return a list of the 3 types of input type, for each centroid
+    return cropped
+
 
 def preprocessing_pipeline(DBZ, VEL, RHOHV):
 
