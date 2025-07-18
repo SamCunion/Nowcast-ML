@@ -146,9 +146,9 @@ def extract_crops_by_centroid(DBZ, VEL, RHOHV, CENTROIDS, CROP_DIMS=(50, 50)):
         az_max = min(az_min + CROP_DIMS[1], shape[2])
 
         #construct new cropped tensor for each input type
-        DBZ_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
-        VEL_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
-        RHO_Crop = torch.zeros(1, CROP_DIMS[1], CROP_DIMS[2])
+        DBZ_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
+        VEL_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
+        RHO_Crop = torch.zeros(1, CROP_DIMS[0], CROP_DIMS[1])
 
         #copy across the data from within the bounding box region to the new tensor
         DBZ_Crop[:, :rng_max - rng_min, :az_max - az_min] = DBZ[:, rng_min:rng_max, az_min:az_max]
