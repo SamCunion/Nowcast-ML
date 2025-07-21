@@ -42,11 +42,11 @@ def fc_segment():
     return NN.Sequential(
         NN.Flatten(),
 
-        NN.Linear(2048, 1024),
+        NN.Linear(128, 2048),
         NN.Dropout(),
         NN.ReLU(True),
 
-        NN.Linear(1024, 1024),
+        NN.Linear(2048, 1024),
         NN.Dropout(),
         NN.ReLU(True),
 
