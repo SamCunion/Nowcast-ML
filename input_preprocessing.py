@@ -62,7 +62,7 @@ def remove_extreme_artefacts(VEL):
     return new_vel
 
 #interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
-def interpolate_velocity_noise(DBZ, VEL, SIGMA=2.0):
+def interpolate_velocity_noise(DBZ, VEL, SIGMA=3.0):
     device = VEL.device
     #mask where velocity is NAN and DBZ exists
     mask = torch.isnan(VEL) & ~torch.isnan(DBZ)

@@ -3,7 +3,8 @@ import torch
 import time
 import numpy as np
 from load_dataset import get_torcast_dataloader
-from TorCastML import TorCastML
+from TorCastML_v0 import TorCastML_v0
+from TorCastML_v1 import TorCastML_v1
 from input_preprocessing import preprocessing_pipeline
 
 #entry
@@ -27,7 +28,7 @@ data_loader = get_torcast_dataloader("train", 32, 10)
 
 print("Running TorCast Trainer Module")
 
-model = TorCastML().to(DEVICE)
+model = TorCastML_v1().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
 loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
 loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
