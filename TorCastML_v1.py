@@ -9,13 +9,13 @@ CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 #defines the input segments of the NN
 def input_head():
     return NN.Sequential(
-        NN.Conv2d(INPUT_CHANNELS, 64, kernel_size=3, padding=1, stride=1),
-        NN.BatchNorm2d(64),
+        NN.Conv2d(INPUT_CHANNELS, 32, kernel_size=3, padding=1),
+        NN.BatchNorm2d(32),
         NN.ReLU(True),
         NN.MaxPool2d(2),
 
-        NN.Conv2d(64, 128, kernel_size=5, padding=1, stride=1),
-        NN.BatchNorm2d(128),
+        NN.Conv2d(32, 64, kernel_size=3, padding=1),
+        NN.BatchNorm2d(64),
         NN.ReLU(True),
         NN.MaxPool2d(2)
     )
@@ -23,16 +23,12 @@ def input_head():
 #shared learning, merges the three input heads
 def shared_segment():
     return NN.Sequential(
-        NN.Conv2d(128 * INPUT_TYPES, 256, kernel_size=7, padding=2, stride=1),
-        NN.BatchNorm2d(256),
-        NN.ReLU(True),
-
-        NN.Conv2d(256, 256, kernel_size=5, padding=1, stride=1),
-        NN.BatchNorm2d(256),
-        NN.ReLU(True),
-
-        NN.Conv2d(256, 128, kernel_size=7, padding=2, stride=3),
+        NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=1),
         NN.BatchNorm2d(128),
+        NN.ReLU(True),
+
+        NN.Conv2d(128, 256, kernel_size=3, padding=1),
+        NN.BatchNorm2d(256),
         NN.ReLU(True),
 
     )
@@ -42,12 +38,11 @@ def fc_segment():
     return NN.Sequential(
         NN.Flatten(),
 
-        NN.Linear(128, 2048),
-        NN.Dropout(),
+        NN.Linear(256, 128),
         NN.ReLU(True),
+        NN.Dropout(0.3),
 
-        NN.Linear(2048, 1024),
-        NN.Dropout(),
+        NN.Linear(128, 64),
         NN.ReLU(True),
 
         
@@ -56,23 +51,19 @@ def fc_segment():
 #tornado probability head
 def prob_head():
     return NN.Sequential(
-        NN.Linear(1024, 512),
+        NN.Linear(64, 32),
         NN.ReLU(True),
 
-        NN.Linear(512, 1)
+        NN.Linear(32, 1)
     )
 
 #EF-scale classification head
 def intensity_head():
     return NN.Sequential(
-        NN.Linear(1024, 1024),
-        NN.Dropout(),
+        NN.Linear(64, 32),
         NN.ReLU(True),
 
-        NN.Linear(1024, 512),
-        NN.ReLU(True),
-
-        NN.Linear(512, CLASSIFIER_CLASSES)
+        NN.Linear(32, CLASSIFIER_CLASSES)
         #for training, needs raw logits, can apply softmax later
     )
 
