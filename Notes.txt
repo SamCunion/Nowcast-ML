@@ -1,0 +1,105 @@
+IDEAS:
+Chinese researchers dealt with forest networks
+Attempt either individual inputs for the products, or stack them in one input
+Further train the pretrained CNN?
+Use velocity gate trick to find areas of interest. If none found, break input into 50x50. Remove unlikely 50x50s. Pass remaining through.
+If multiple gates found, pass all through and take strongest of each
+If no gates found, pass all through and take strongest of both.
+
+Pre-processing methods:
+identify horizontal bands within velocity that indicate interferance, interpolate them.
+normalise each product
+implement "the national severe storms laboratory tornado detection algorithm" to find areas of interest (use both tilts?)
+calculate how effective it is at finding areas in confirmed tornado scans
+center 50x50 chunk on that area, train with that. In instance without any detected and is of type 0, use random 50x50 chunk
+
+https://nomads.ncep.noaa.gov/pub/data/nccf/radar/nexrad_level2/KLTX/ - live radar imagery
+Use this to make a tool to select a 100x100(?) pixel area on a scan, which is then transformed to an input for the first NN. Output of that is fed to 2nd NN.
+bz2 format can be extracted by this https://www.npmjs.com/package/nexrad-level-2-data extremely useful package
+
+otherwise, take the scan and set areas of low precip, and low velocity to 0. Maybe investigate clustering to identify pixels related to velocity couplets
+simpler setup, pre-process each batch then feed it through nn. compare to without to see if its better.
+
+
+!!IMPORTANT TO REMEMBER!!
+activate correct python before going: pyenv shell 3.11.13
+
+in tornet_dataset_builder, you've made it so each scan only uses the last frame. can be increased to 4 if more data needed. Do remember to make sure sequential scans arent given as training, and they're jumbled up.
+
+gaussian smoothing actually made performance go down, can maybe try to remove and see if it improves/change to nearest neighbour
+
+could use range folded mask in the future
+
+could use tornado heavy subsample in the future
+
+could use ordinal regression over softmax for intensity classification
+
+
+
+Log:
+added testing with accuracy/precision/recall/f1 to evaluate tor prob prediction head, and quadratic kappa for intensity classifier head
+weird situation where some inputs were all nan, and some dbz inputs were malformed with negatives and nans
+biased towards true positives, as there are not many of those and are IMPORTANT
+made loss matter more from prob head compared to classifier head
+biased classifier head along, to be weighted according to the number of examples of each in the dataset. set ef5 to 1 to avoid /0 errors
+added label smoothing, and tried kl divergence to attempt to get it to do better in classifying (since ef2 might as well be an ef1), however wasnt possible
+added gaussian smoothing to smooth over missing velocity data. uses dbz as a mask, so only missing velocity data that has a corresponding >20 dbz gets smoothed view algorithm for details
+removed all data from matrices where dbz < 20, made above more efficient
+removed sidelobe velocity artefacts before smoothing, where velocity was set to +-max 
+changed sidelobe strategy, where now it detects data where a data point is greater than the sum of its neighbours, its averaged across those 4
+added the removal of the velocity artefacts again
+get gate to gate shear, mark them, mask around them, or mask just the storm, pass the mask as a new input stacked on the 3 separate inputs
+increased depth of the model significantly, use maxpooling becasue we're interested in preserving extreme values. Starts off with small kernels, becasue we want to preserve small features. Gradually get larger and very general 5 and 7 sized filters for shared conv layers
+added dropout layers to help with overfitting, was probably too much in the end. big dataset = unlikely to overfit. reduced.
+
+
+TorCastML_v0
+ACC    PREC   REC    F1         TP  FP   TN    FN       QC      NONTOR     F0      F1       F2       F3     F4       F5  REG       SIG
+1e_baseline (training ~5m)
+0.8664 0.1484 0.1047 0.1228     292 1675 26780 2496 |   0.0096  29276/7496 807/0   783/72   235/1029 101/0  41/22646 0/0 1101/1825 22646/142   
+
+3e_baseline (training ~15m)
+0.7837 0.3833 0.1197 0.1824     754 1213 23732 5544 |   0.0457  29276/21180 807/84  783/3211 235/1602 101/1 41/5165 0/0  4897/1825 5166/142
+
+10e_baseline (training ~50m)
+0.7931 0.4753 0.1468 0.2244     935 1032 23845 5431 |   0.0948  29276/23405 807/281 783/3100 235/880 101/629 41/2948 0/0 4261/1825 3577/142
+
+1e_smoothed (training ~8m)
+0.7175 0.5165 0.1142 0.1871     1016 951 21403 7873 |   0.0249  29276/17599 807/92  783/5481 235/154 101/0  41/7917 0/0  5727/1825  7917/142
+
+3e_smoothed (training ~24m)
+0.8642 0.1850 0.1212 0.1465     364 1603 26639 2637 |   0.0505  29276/22713 807/4   783/1175 235/2   101/0  41/7347 0/0  1181/1825  7349/142
+
+10e_smoothed (training ~1h 20m)
+0.8589 0.3126 0.1675 0.2181     615 1352 26220 3056 |   0.0966  29276/26720 807/196 783/2758 235/590 101/35 41/946  0/0  3542/1825  981/142
+
+1e_dbz_thresh (training ~5m)
+0.6669 0.5903 0.1070 0.1811     1130 784 19323 9430 |   0.0373  28753/18798 779/0   773/5312 225/810 101/0  36/5747 0/0  6122/1777  5747/137
+
+3e_dbz_thresh (training ~15m)
+0.7691 0.4728 0.1297 0.2036     905 1009 22684 6069 |   0.0604  28753/21955 779/602 773/3041 225/822 101/119 36/4128 0/0 4465/1777  4247/137
+
+10e_dbz_thresh (training ~51m)
+0.8155 0.4545 0.1587 0.2352     870 1044 24142 4611 |   0.0801  28753/23455 779/418 773/2426 225/720 101/486 36/3162 0/0 3564/1777  3684/137
+
+1e_masked (training ~6m)
+0.7397 0.4997 0.1209 0.1947     989 990  22266 7190 |   0.0681  29456/22271 807/0   788/5619 239/1064 101/0  44/2481 0/0 6683/1834  2481/145
+
+3e_masked (training ~19m)
+0.7231 0.5618 0.1242 0.2035     1112 867 21621 7835 |   0.0615  29456/20719 807/463 788/4970 239/1052 101/648 44/3583 0/0 6485/1834 4231/145
+
+10e_masked (training ~1h 4m)
+0.7599 0.5866 0.1471 0.2352     1161 818 22727 6729 |   0.1141  29456/22490 807/645 788/4732 239/1342 101/540 44/1686 0/0 6719/1834 2226/145
+
+============================================================================================================================================
+
+TorCastML_v1
+ACC    PREC   REC    F1         TP  FP   TN    FN       QC      NONTOR     F0      F1       F2       F3     F4       F5  REG       SIG
+1e_baseline (training ~11m)
+0.8243 0.3249 0.1331 0.1889     643 1336 25271 4185 |   0.0606  29456/24755 807/720 788/3415 239/196 101/0    44/2349 0/0 4331/1834 2349/145
+
+3e_baseline (training ~33m)
+0.7805 0.4401 0.1307 0.2016     871 1108 23667 5789 |   0.0690  29456/24406 807/0  788/3251 239/535  101/575  44/2668 0/0 3786/1834 3243/145
+
+10e_baseline (training ~1h 50m)
+0.8202 0.5113 0.1776 0.2637     1012 967 24772 4674 |   0.1276  29456/24127 807/83 788/3323 239/1220 101/1163 44/1519 0/0 4626/1834 2682/145
