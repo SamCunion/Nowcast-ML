@@ -51,6 +51,10 @@ added the removal of the velocity artefacts again
 get gate to gate shear, mark them, mask around them, or mask just the storm, pass the mask as a new input stacked on the 3 separate inputs
 increased depth of the model significantly, use maxpooling becasue we're interested in preserving extreme values. Starts off with small kernels, becasue we want to preserve small features. Gradually get larger and very general 5 and 7 sized filters for shared conv layers
 added dropout layers to help with overfitting, was probably too much in the end. big dataset = unlikely to overfit. reduced.
+changed to stacked inputs
+added two immediate conv2d layers, which should help grasp the smaller features, then used stride = 2 for trainable compression, as fine details are required
+possibly multiplied feature map by mask to ensure its being adhered to
+note: if not good, remove double stacked conv blocks, and put relu and batchnorm between them. worst case scenario do the balanced training
 
 
 TorCastML_v0
@@ -103,3 +107,16 @@ ACC    PREC   REC    F1         TP  FP   TN    FN       QC      NONTOR     F0   
 
 10e_baseline (training ~1h 50m)
 0.8202 0.5113 0.1776 0.2637     1012 967 24772 4674 |   0.1276  29456/24127 807/83 788/3323 239/1220 101/1163 44/1519 0/0 4626/1834 2682/145
+
+============================================================================================================================================
+
+TorCastML_v2
+ACC    PREC   REC    F1         TP  FP   TN    FN       QC      NONTOR     F0      F1       F2       F3     F4       F5  REG       SIG
+1e_baseline (training ~21m)
+0.6672 0.5987 0.1092 0.1847     1185 794 19791 9665 |   0.0366  29456/20939 807/0  788/1807 239/0    101/0  44/8689  0/0 1807/1834 8689/145
+
+3e_baseline (training ~1h 2m)
+0.7568 0.4719 0.1239 0.1963     934  1045 22857 6599|   0.0567  29456/22973 807/0  788/4079 239/115  101/536 44/3732 0/0 4194/1834 4268/145
+
+10e_baseline (training ~3h 29m)
+0.7459 0.5977 0.1412 0.2285     1183 796  22265 7191|   0.0938  29456/22384 807/183 788/4735 239/508 101/418 44/3207 0/0 5426/1834 3625/145

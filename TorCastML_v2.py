@@ -8,7 +8,8 @@ CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 #defines the input segments of the NN
 def conv_layers():
     return NN.Sequential(
-        NN.Conv2d(INPUT_CHANNELS, 32, kernel_size=3, padding=1),
+        NN.Conv2d(INPUT_CHANNELS, 16, kernel_size=3, padding=1),
+        NN.Conv2d(16, 32, kernel_size=3, padding=1),
         NN.BatchNorm2d(32),
         NN.ReLU(True),
 
@@ -16,15 +17,13 @@ def conv_layers():
         NN.BatchNorm2d(64),
         NN.ReLU(True),
 
-        NN.Conv2d(64, 128, kernel_size=3, padding=1, stride=1),
+        NN.Conv2d(64, 128, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(128),
         NN.ReLU(True),
-        NN.MaxPool2d(2),
 
-        NN.Conv2d(128, 256, kernel_size=3, padding=1),
+        NN.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(256),
         NN.ReLU(True),
-        NN.MaxPool2d(2)
     )
 
 #shared fully connected layer(s)
@@ -34,7 +33,7 @@ def fc_segment():
 
         NN.Linear(256, 128),
         NN.ReLU(True),
-        NN.Dropout(0.3),
+        NN.Dropout(0.2),
 
         NN.Linear(128, 64),
         NN.ReLU(True),
