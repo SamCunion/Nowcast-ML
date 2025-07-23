@@ -55,9 +55,7 @@ with torch.no_grad():
         BATCH_RHOHV = batch["RHOHV"][...,0]
         BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
-        SPLIT_DBZ = []
-        SPLIT_VEL = []
-        SPLIT_RHOHV = []
+        SPLIT_STACK = []
         SPLIT_LABEL = []
         SPLIT_EF = []
 
@@ -73,26 +71,20 @@ with torch.no_grad():
                 #invalid, just skip this item in the batch
                 continue
 
-            #combine input matrices with the computed feature mask
-            MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
-            MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
-            MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+             #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
+            STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
 
-            SPLIT_DBZ.append(MASKED_DBZ)
-            SPLIT_VEL.append(MASKED_VEL)
-            SPLIT_RHOHV.append(MASKED_RHOHV)
+            SPLIT_STACK.append(STACK)
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
         
         
         #merge batch again
-        DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
-        VEL = torch.stack(SPLIT_VEL).to(DEVICE)
-        RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
+        INPUT_STACK = torch.stack(STACK).to(DEVICE)
         labels = [val.item() for val in SPLIT_LABEL]
         ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
 
-        prob, class_logits = model(DBZ, VEL, RHOHV)
+        prob, class_logits = model(INPUT_STACK)
 
         batch_tor_probs = torch.sigmoid(prob)
         batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).int().view(-1).cpu().numpy()

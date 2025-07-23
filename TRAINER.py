@@ -5,6 +5,7 @@ import numpy as np
 from load_dataset import get_torcast_dataloader
 from TorCastML_v0 import TorCastML_v0
 from TorCastML_v1 import TorCastML_v1
+from TorCastML_v2 import TorCastML_v2
 from input_preprocessing import preprocessing_pipeline
 
 #entry
@@ -28,7 +29,7 @@ data_loader = get_torcast_dataloader("train", 32, 10)
 
 print("Running TorCast Trainer Module")
 
-model = TorCastML_v1().to(DEVICE)
+model = TorCastML_v2().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
 loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
 loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
@@ -53,9 +54,7 @@ for epoch in range(NUM_EPOCHS):
         BATCH_RHOHV = batch["RHOHV"][...,0]
         BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
-        SPLIT_DBZ = []
-        SPLIT_VEL = []
-        SPLIT_RHOHV = []
+        SPLIT_STACK = []
         SPLIT_LABEL = []
         SPLIT_EF = []
 
@@ -71,28 +70,22 @@ for epoch in range(NUM_EPOCHS):
                 #invalid, just skip this item in the batch
                 continue
 
-            #combine input matrices with the computed feature mask
-            MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
-            MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
-            MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+            #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
+            STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
 
-            SPLIT_DBZ.append(MASKED_DBZ)
-            SPLIT_VEL.append(MASKED_VEL)
-            SPLIT_RHOHV.append(MASKED_RHOHV)
+            SPLIT_STACK.append(STACK)
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
         
         
         #merge batch again
-        DBZ = torch.stack(SPLIT_DBZ).to(DEVICE)
-        VEL = torch.stack(SPLIT_VEL).to(DEVICE)
-        RHOHV = torch.stack(SPLIT_RHOHV).to(DEVICE)
+        INPUT_STACK = torch.stack(STACK).to(DEVICE)
         LABELS = torch.stack(SPLIT_LABEL).to(DEVICE)
         EF_NUMBERS = torch.stack(SPLIT_EF).to(DEVICE)
 
         optimizer.zero_grad()
 
-        prob, class_logits = model(DBZ, VEL, RHOHV)
+        prob, class_logits = model(INPUT_STACK)
         
         
         #classifier truth

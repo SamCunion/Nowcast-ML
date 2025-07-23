@@ -28,7 +28,7 @@ in tornet_dataset_builder, you've made it so each scan only uses the last frame.
 
 gaussian smoothing actually made performance go down, can maybe try to remove and see if it improves/change to nearest neighbour
 
-could use range folded mask in the future
+could use range folded mask in the future. Remember data is already de-aliased, so for training this wont be a problem. If using inference with data not selected from the dataset, will have to dealias as well
 
 could use tornado heavy subsample in the future
 

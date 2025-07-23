@@ -180,7 +180,7 @@ def preprocessing_pipeline(DBZ, VEL, RHOHV):
         print("DBZ, VEL or RHOHV matrix filled entirely with nan: rejected")
         return False
 
-    #trehsold all 3 inputs yb DBZ
+    #threshold all 3 inputs by DBZ
     DBZ, VEL, RHOHV = reduce_to_dbz_threshold(DBZ, VEL, RHOHV)
 
     #remove erroneous sidelobe values
