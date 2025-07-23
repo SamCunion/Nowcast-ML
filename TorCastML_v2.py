@@ -81,16 +81,16 @@ class TorCastML_v2(NN.Module):
     
     #forward pass through TorCast
     def forward(self, input_stack):
-        #input is in the form (batch, 4, 240, 120)
+        #shape: (BATCH, 4, 120, 240)
 
         conv_layer = self.combined_head(input_stack)
-        #each is now (batch, 256, 60, 30)
+        #shape: (BATCH, 256, 30, 60)
 
-        #shape: (batch, 64, 30, 15)
         linear = self.linearise(conv_layer)
-        #shape: (batch, 64, 1, 1)
+        #shape: (BATCH, 256, 1, 1)
+
         fc = self.fc(linear)
-        #shape: (batch, 32)
+        #shape: (BATCH, 64)
 
         #output heads
         out_prob = self.tor_prob(fc) #shape: (batch, 1)

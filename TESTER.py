@@ -80,7 +80,7 @@ with torch.no_grad():
         
         
         #merge batch again
-        INPUT_STACK = torch.stack(STACK).to(DEVICE)
+        INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
         labels = [val.item() for val in SPLIT_LABEL]
         ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
 

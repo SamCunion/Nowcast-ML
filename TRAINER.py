@@ -79,7 +79,7 @@ for epoch in range(NUM_EPOCHS):
         
         
         #merge batch again
-        INPUT_STACK = torch.stack(STACK).to(DEVICE)
+        INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
         LABELS = torch.stack(SPLIT_LABEL).to(DEVICE)
         EF_NUMBERS = torch.stack(SPLIT_EF).to(DEVICE)
 
