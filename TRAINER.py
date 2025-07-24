@@ -21,6 +21,7 @@ print("Using device: " + "cuda" if torch.cuda.is_available() else "cpu")
 
 #constants
 NUM_EPOCHS = 1
+PROBABILITY_WARNING_FORGIVENESS = 0.5 #scales loss by this amount when predicting true on warned, but unconfirmed tornado
 OUT_PATH = "./saved_models/"
 DATASET_EF_TOTALS = np.array([189275, 5393, 5644, 1997, 651, 172, 1]) #total nontor, ef0, ef1, ef2, ef3, ef4, ef5 (actually 0 ef5, but set to one to avoid divide by zero)
 TOTAL_ITEMS = 203132
@@ -54,9 +55,11 @@ for epoch in range(NUM_EPOCHS):
         BATCH_RHOHV = batch["RHOHV"][...,0]
         BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
+        BATCH_CATEGORY=  batch["category"].squeeze().long()
         SPLIT_STACK = []
         SPLIT_LABEL = []
         SPLIT_EF = []
+        SPLIT_CATEGORY = []
 
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
@@ -64,6 +67,7 @@ for epoch in range(NUM_EPOCHS):
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
             label_data = BATCH_LABEL[i] #individual label
             ef_data = BATCH_EF[i] #individual ef number
+            cat_data = BATCH_CATEGORY[i] #individual category label
 
             matrices = preprocessing_pipeline(dbz_data, vel_data, rhohv_data)
             if (isinstance(matrices, bool) and matrices == False):
@@ -76,12 +80,14 @@ for epoch in range(NUM_EPOCHS):
             SPLIT_STACK.append(STACK)
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
+            SPLIT_CATEGORY.append(cat_data)
         
         
         #merge batch again
         INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
         LABELS = torch.stack(SPLIT_LABEL).to(DEVICE)
         EF_NUMBERS = torch.stack(SPLIT_EF).to(DEVICE)
+        CATEGORIES = torch.stack(SPLIT_CATEGORY).to(DEVICE)
 
         optimizer.zero_grad()
 
@@ -93,8 +99,17 @@ for epoch in range(NUM_EPOCHS):
         ef_truths = torch.nn.functional.one_hot(ef_indices, num_classes=7).float()
         ef_truths = ef_truths.squeeze(1)
         prob_loss = loss_prob(prob.squeeze(dim=1), LABELS)
+        prob_percent = torch.sigmoid(prob.squeeze(dim=1))
         class_loss = loss_classifier(class_logits, ef_truths)
-        overall_loss = (prob_loss * 0.7) + (class_loss * 0.3) #scale depending on what head should influence loss more
+
+        #if probability head decided "yes" and type is "warned", scale head loss by defined amount
+        #if prediction is "yes" (> 0.5) and label is 0 (no confirmed torndado) and category is 2 (warned)
+        leniency_matches = (prob_percent > 0.5) & (LABELS == 0) & (CATEGORIES == 2)
+        leniency_scale = torch.ones_like(LABELS, dtype=torch.float32)
+        leniency_scale[leniency_matches] = PROBABILITY_WARNING_FORGIVENESS
+        prob_loss *= leniency_scale
+
+        overall_loss = (prob_loss * 0.7) + (class_loss * 0.3) #scale depending on which head should influence loss more
         overall_loss.backward()
         optimizer.step()
 
