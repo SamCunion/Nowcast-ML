@@ -32,7 +32,7 @@ print("Running TorCast Trainer Module")
 
 model = TorCastML_v2().to(DEVICE)
 optimizer = torch.optim.Adam(model.parameters())
-loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE)) #biases loss towards positives, 6% are positives according to TorNet
+loss_prob = torch.nn.BCEWithLogitsLoss(pos_weight=torch.tensor([94 / 6]).to(DEVICE), reduction="none") #biases loss towards positives, 6% are positives according to TorNet
 loss_classifier = torch.nn.CrossEntropyLoss(weight=torch.tensor((TOTAL_ITEMS / DATASET_EF_TOTALS), dtype=torch.float32).to(DEVICE)) #biases classifier since very few tornado examples exist
 
 print("Beginning TorCastML training for " + str(NUM_EPOCHS) + " epochs...")
@@ -108,6 +108,7 @@ for epoch in range(NUM_EPOCHS):
         leniency_scale = torch.ones_like(LABELS, dtype=torch.float32)
         leniency_scale[leniency_matches] = PROBABILITY_WARNING_FORGIVENESS
         prob_loss *= leniency_scale
+        prob_loss = prob_loss.mean()
 
         overall_loss = (prob_loss * 0.7) + (class_loss * 0.3) #scale depending on which head should influence loss more
         overall_loss.backward()
