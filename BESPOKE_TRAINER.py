@@ -9,6 +9,8 @@ from TorCastML_v1 import TorCastML_v1
 from TorCastML_v2 import TorCastML_v2
 from input_preprocessing import preprocessing_pipeline
 from sklearn import metrics
+import warnings
+warnings.filterwarnings("ignore", message="The given NumPy array is not writable*")
 
 #==============================================================================================================
 #Overall Settings
@@ -31,7 +33,7 @@ def main_task(start_epoch, model_name, model):
     DEVICE = torch.device(DEVICE_NAME)
     CONVERGED = False
     epoch_no = start_epoch
-    print("Beginning training " + model_name + " on " + DEVICE_NAME)
+    print("Beginning training of '" + model_name + "' on " + DEVICE_NAME)
     train_data_loader = get_torcast_dataloader("train", 32, 10)
     test_data_loader = get_torcast_dataloader("test", 32, 10)
 
@@ -61,18 +63,21 @@ def main_task(start_epoch, model_name, model):
         qks.append(qks)
 
         #log metrics
-        print("Epoch " + str(epoch_no) + " took " + str(epoch_duration // 3600) + ":" + str((epoch_duration % 3600) // 60) + ":" + str(epoch_duration % 60) + " - " + str(acc) + "," + str(prec) + "," + str(rec) + "," + str(f1) + "," + str(qk))
+        print("e" + str(epoch_no) + " took " + str((round(epoch_duration % 3600)) // 60) + ":" + str(round(epoch_duration % 60)) + " - " + str(round(acc, 4)) + "," + str(round(prec, 4)) + "," + str(round(rec, 4)) + "," + str(round(f1, 4)) + "," + str(round(qk, 4)))
 
         #save model
         torch.save(model, MODEL_PATH + "e" + str(epoch_no) + "-" + model_name + ".pt")
 
         #detect convergence, if the two previous F1 scores are worse than the third previous f1 score, its probably converged
-        if ((f1[-3] > f1[-2]) and (f1[-3] > f1[-1])):
+        if (len(f1s) > 5 and (f1s[-3] > f1s[-2]) and (f1s[-3] > f1s[-1])):
             #the model has converged
             CONVERGED = True
         
     #finish up
     print("Model has converged after " + str(epoch_no) + " epochs.")
+    for i in range(len(accs)):
+        print("Epoch " + str(i + 1) + " - " + str(accs[i]) + "," + str(precs[i]) + "," + str(recs[i]) + "," + str(f1s[i]) + "," + str(qks[i]))
+
     input("Press enter to exit...")
 
 
@@ -237,6 +242,7 @@ if __name__ == "__main__":
     ans = input("New/Load: ")
     if ans.lower() == "new":
         model_name = input("Agent Name: ")
+        main_task(start_epoch, model_name, MODEL)
     elif ans.lower() == "load":
         saved_model_list = os.listdir(MODEL_PATH)
         print_str = "Select model to load:\n"
@@ -247,5 +253,6 @@ if __name__ == "__main__":
         model_name = saved_model_list[saved_model_id]
         MODEL = torch.load(MODEL_PATH + model_name, weights_only=False)
         start_epoch = int(input("Start Epoch: "))
+        main_task(start_epoch, model_name, MODEL)
     else:
         exit()
