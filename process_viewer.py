@@ -22,8 +22,10 @@ SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 #==============================================================================================
 
-def plot_images(DBZ, VEL, RHOHV, MASK=None, CAM=None):
+def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None):
     figure, axes = plt.subplots(1, 3, figsize=(15, 5))
+    figure.suptitle(title, fontsize=16)
+    figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=10, ha="center")
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
     for i, (title, field) in enumerate(fields):
         axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
@@ -38,13 +40,13 @@ def plot_images(DBZ, VEL, RHOHV, MASK=None, CAM=None):
                 axes[i].imshow(CAM[0], cmap="jet", alpha=0.4)
             else:
                 axes[i].imshow(CAM[i], cmap="jet", alpha=0.4)
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.3, 1, 0.95])
     plt.show()
 
 
 if __name__ == "__main__":
     catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
-    model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
+    #model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
 
     if (SAMPLE == None): #get random sample for viewing
         random_item = catalogue.sample(n=1)
@@ -79,7 +81,7 @@ if __name__ == "__main__":
 
     #plot raw inputs
     title = "Raw inputs"
-    plot_images(DBZ, VEL, RHOHV)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     #is one of the inputs filled with nans? red alert!
     if (torch.isnan(DBZ).all() or torch.isnan(VEL).all() or torch.isnan(RHOHV).all()):
@@ -87,29 +89,29 @@ if __name__ == "__main__":
 
     title = "Reduced to DBZ threshold"
     DBZ, VEL, RHOHV = reduce_to_dbz_threshold(DBZ, VEL, RHOHV)
-    plot_images(DBZ, VEL, RHOHV)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     title = "Smoothed velocity spikes"
     VEL = detect_and_smooth_spikes(VEL)
-    plot_images(DBZ, VEL, RHOHV)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     title = "Removed extreme artefacts"
     VEL = remove_extreme_artefacts(VEL)
-    plot_images(DBZ, VEL, RHOHV)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     title = "Gaussian smoothed velocity in noisy areas"
     VEL = interpolate_velocity_noise(DBZ, VEL)
-    plot_images(DBZ, VEL, RHOHV)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     title = "Constructed mask around areas of interest"
     DBZ, VEL, RHOHV, MASK = generate_feature_mask(DBZ, VEL, RHOHV)
-    plot_images(DBZ, VEL, RHOHV, MASK=MASK)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=MASK)
     
     title = "Normalised the data"
     DBZ = normalise_input("DBZ", DBZ)
     VEL = normalise_input("VEL", VEL)
     RHOHV = normalise_input("RHOHV", RHOHV)
-    plot_images(DBZ, VEL, RHOHV, MASK=MASK)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
     if ((isinstance(DBZ, bool) and DBZ == False) or (isinstance(VEL, bool) and VEL == False) or (isinstance(RHOHV, bool) and RHOHV == False)):
         print("DBZ, VEL, or RHOHV matrix rejected, most likely either extremely low DBZ across the board, or VEL only in one direction")
@@ -126,4 +128,4 @@ if __name__ == "__main__":
         VEL = VEL.unsqueeze(0)
         RHOHV = RHOHV.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
-    plot_images(DBZ, VEL, RHOHV, CAM=CAM)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM)
