@@ -24,18 +24,17 @@ SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None, torprob=None, ef_probs=None):
     figure, axes = plt.subplots(1, 3, figsize=(15, 5))
-    figure.suptitle(title, fontsize=16)
-    figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=10, ha="center")
-    if (torprob != None and ef_probs != None):
+    figure.suptitle(title, fontsize=20)
+    figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=15, ha="center")
+    if (torprob != None):
         #format intensity
-        ef_probs = round(ef_probs, 4)
         ef_probs *= 100
-        ef_string = f"Nontor: {ef_probs[0]}% EF-0: {ef_probs[1]}% EF-1: {ef_probs[2]}% EF-2: {ef_probs[3]}% EF-3: {ef_probs[4]}% EF-4: {ef_probs[5]}% EF-5: {ef_probs[6]}%"
-        figure.text(0.5, 0.1, f"Tornado probability: {torprob * 100}%, intensity probs: {ef_string}")
+        ef_string = f"Nontor: {ef_probs[0] :.0f}% EF-0: {ef_probs[1] :.0f}% EF-1: {ef_probs[2] :.0f}% EF-2: {ef_probs[3] :.0f}% EF-3: {ef_probs[4] :.0f}% EF-4: {ef_probs[5] :.0f}% EF-5: {ef_probs[6] :.0f}%"
+        figure.text(0.5, 0.1, f"Tornado probability:{torprob * 100: .0f}%, intensity probs: {ef_string}", fontsize=15, ha="center")
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
     for i, (title, field) in enumerate(fields):
         axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
-        axes[i].set_title(title)
+        axes[i].set_title(title, fontsize=15)
         axes[i].axis("off")
 
         if (MASK != None):
