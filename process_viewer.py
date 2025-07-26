@@ -34,14 +34,17 @@ def plot_images(DBZ, VEL, RHOHV, MASK=None, CAM=None):
             axes[i].imshow(MASK.squeeze(0), cmap="Purples", alpha=0.3, interpolation="nearest")
         
         if (CAM != None):
-            axes[i].imshow(CAM, cmap="jet", alpha=0.4)
+            if (len(CAM) == 1):
+                axes[i].imshow(CAM[0], cmap="jet", alpha=0.4)
+            else:
+                axes[i].imshow(CAM[i], cmap="jet", alpha=0.4)
     plt.tight_layout()
     plt.show()
 
 
 if __name__ == "__main__":
     catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
-    #model = torch.load(MODEL_PATH)
+    model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
 
     if (SAMPLE == None): #get random sample for viewing
         random_item = catalogue.sample(n=1)
@@ -114,9 +117,13 @@ if __name__ == "__main__":
 
     #build inputs
     title = "Model output and GRAD-CAM attention heatmap"
-    if (len(model.gradcam_targets) > 1): #combined head
+    if (len(model.gradcam_targets) == 1): #combined head
         stack = torch.cat([DBZ, VEL, RHOHV, MASK], dim=0)
+        stack = stack.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, stack=stack, with_grad=True)
     else:
+        DBZ = DBZ.unsqueeze(0)
+        VEL = VEL.unsqueeze(0)
+        RHOHV = RHOHV.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
     plot_images(DBZ, VEL, RHOHV, CAM=CAM)
