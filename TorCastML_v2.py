@@ -60,6 +60,9 @@ def intensity_head():
     )
 
 class TorCastML_v2(NN.Module):
+
+    gradcam_targets = ["combined_head"]
+
     def __init__(self):
         super().__init__()
 
