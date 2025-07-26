@@ -22,10 +22,16 @@ SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 #==============================================================================================
 
-def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None):
+def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None, torprob=None, ef_probs=None):
     figure, axes = plt.subplots(1, 3, figsize=(15, 5))
     figure.suptitle(title, fontsize=16)
     figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=10, ha="center")
+    if (torprob != None and ef_probs != None):
+        #format intensity
+        ef_probs = round(ef_probs, 4)
+        ef_probs *= 100
+        ef_string = f"Nontor: {ef_probs[0]}% EF-0: {ef_probs[1]}% EF-1: {ef_probs[2]}% EF-2: {ef_probs[3]}% EF-3: {ef_probs[4]}% EF-4: {ef_probs[5]}% EF-5: {ef_probs[6]}%"
+        figure.text(0.5, 0.1, f"Tornado probability: {torprob * 100}%, intensity probs: {ef_string}")
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
     for i, (title, field) in enumerate(fields):
         axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
@@ -46,7 +52,7 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
 
 if __name__ == "__main__":
     catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
-    #model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
+    model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
 
     if (SAMPLE == None): #get random sample for viewing
         random_item = catalogue.sample(n=1)
@@ -128,4 +134,4 @@ if __name__ == "__main__":
         VEL = VEL.unsqueeze(0)
         RHOHV = RHOHV.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
-    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM)
+    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM, torprob=TOR_PROB, ef_probs=CLASS_PROBS)
