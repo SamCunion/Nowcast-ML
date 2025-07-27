@@ -14,11 +14,21 @@ from inference import Query_Model
 from dotenv import load_dotenv
 load_dotenv()
 
-
+#good examples:
+#
+#"train/2019/WRN_190503_012809_KDFX_1081987n_C5.nc" - strong looking weak tor
+#"test/2015/TOR_151223_230807_KNQA_610239_P2.nc" - clear ef4
+#
+#
+#
+#
+#
+#
+#
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/bespoke/e12-final_test.pt"
-SAMPLE = None#"test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
+MODEL_PATH = "./saved_models/bespoke/e20-TorCastML_v2.pt"
+SAMPLE = None
 
 #==============================================================================================
 

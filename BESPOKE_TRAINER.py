@@ -243,7 +243,7 @@ if __name__ == "__main__":
         saved_model_id = int(input("Model ID: "))
         model_name = saved_model_list[saved_model_id]
         MODEL = torch.load(MODEL_PATH + model_name, weights_only=False)
-        start_epoch = int(input("Start Epoch: "))
+        start_epoch = int(input("Last Epoch: "))
         main_task(start_epoch, model_name, MODEL)
     else:
         exit()
