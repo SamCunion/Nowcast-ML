@@ -17,8 +17,8 @@ load_dotenv()
 
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/TorCastML-10e_new_training.pt"
-SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
+MODEL_PATH = "./saved_models/bespoke/e12-final_test.pt"
+SAMPLE = None#"test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 #==============================================================================================
 

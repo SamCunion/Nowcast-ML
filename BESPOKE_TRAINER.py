@@ -55,30 +55,20 @@ def main_task(start_epoch, model_name, model):
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
 
-        acc, prec, rec, f1, qk = do_test(model, test_data_loader, DEVICE)
+        acc, prec, rec, f1, qk, tp, fp, tn, fn,  = do_test(model, test_data_loader, DEVICE)
         accs.append(acc)
         precs.append(prec)
         recs.append(rec)
         f1s.append(f1)
         qks.append(qks)
+        
 
         #log metrics
-        print("e" + str(epoch_no) + " took " + str((round(epoch_duration % 3600)) // 60) + ":" + str(round(epoch_duration % 60)) + " - " + str(round(acc, 4)) + "," + str(round(prec, 4)) + "," + str(round(rec, 4)) + "," + str(round(f1, 4)) + "," + str(round(qk, 4)))
+        print("e" + str(epoch_no) + " took " + str((round(epoch_duration % 3600)) // 60) + ":" + str(round(epoch_duration % 60)) + " - " + str(round(acc, 4)) + "," + str(round(prec, 4)) + "," + str(round(rec, 4)) + "," + str(round(f1, 4)) + "," + str(round(qk, 4)) + " | " + str(tp) + "," + str(fp) + "," + str(tn) + "," + str(fn))
 
         #save model
         torch.save(model, MODEL_PATH + "e" + str(epoch_no) + "-" + model_name + ".pt")
 
-        #detect convergence, if the two previous F1 scores are worse than the third previous f1 score, its probably converged
-        if (len(f1s) > 5 and (f1s[-3] > f1s[-2]) and (f1s[-3] > f1s[-1])):
-            #the model has converged
-            CONVERGED = True
-        
-    #finish up
-    print("Model has converged after " + str(epoch_no) + " epochs.")
-    for i in range(len(accs)):
-        print("Epoch " + str(i + 1) + " - " + str(accs[i]) + "," + str(precs[i]) + "," + str(recs[i]) + "," + str(f1s[i]) + "," + str(qks[i]))
-
-    input("Press enter to exit...")
 
 
 def do_epoch(model, data_loader, device, optimizer, loss_prob, loss_classifier):
@@ -223,11 +213,12 @@ def do_test(model, data_loader, device):
     precision = metrics.precision_score(tor_prob_predictions, tor_prob_truths)
     recall = metrics.recall_score(tor_prob_predictions, tor_prob_truths)
     f1 = metrics.f1_score(tor_prob_predictions, tor_prob_truths)
+    true_negatives, false_positives, false_negatives, true_positives = metrics.confusion_matrix(tor_prob_predictions, tor_prob_truths).ravel()
 
     #tornado intensity evaluation
     quad_kappa = metrics.cohen_kappa_score(tor_strength_truths, tor_strength_predictions, weights="quadratic")
 
-    return accuracy, precision, recall, f1, quad_kappa
+    return accuracy, precision, recall, f1, quad_kappa, true_positives, false_positives, true_negatives, false_negatives
 
     
 
