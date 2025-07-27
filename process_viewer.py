@@ -62,6 +62,7 @@ if __name__ == "__main__":
             print("Unable to find file: " + filename)
             exit()
     
+    print("Specimen: " + SAMPLE)
     cdf_file = read_file(DATASET_PATH + "/" + SAMPLE)
     catalogue_item = catalogue.loc[catalogue["filename"] == SAMPLE]
     catalogue_item = catalogue_item.to_numpy()[0]
