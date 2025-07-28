@@ -33,7 +33,10 @@ SAMPLE = None
 #==============================================================================================
 
 def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None, torprob=None, ef_probs=None):
-    figure, axes = plt.subplots(1, 3, figsize=(15, 5))
+    if (CAM != None):
+        figure, axes = plt.subplots(2, 3, figsize=(15, 5))
+    else:
+        figure, axes = plt.subplots(1, 3, figsize=(15, 5))
     figure.suptitle(title, fontsize=20)
     figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=15, ha="center")
     if (torprob != None):
@@ -44,17 +47,18 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
     for i, (title, field) in enumerate(fields):
         axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
+        if (CAM != None):
+            axes[i + 3].imshow(field, cmap=get_cmap(title.lower())[0])
+            if (len(CAM) == 1):
+                axes[i + 3].imshow(CAM[0], cmap="jet", alpha=0.6)
+            else:
+                axes[i + 3].imshow(CAM[i], cmap="jet", alpha=0.6)
         axes[i].set_title(title, fontsize=15)
         axes[i].axis("off")
 
         if (MASK != None):
             axes[i].imshow(MASK.squeeze(0), cmap="Purples", alpha=0.3, interpolation="nearest")
         
-        if (CAM != None):
-            if (len(CAM) == 1):
-                axes[i].imshow(CAM[0], cmap="jet", alpha=0.4)
-            else:
-                axes[i].imshow(CAM[i], cmap="jet", alpha=0.4)
     plt.tight_layout(rect=[0, 0.3, 1, 0.95])
     plt.show()
 
