@@ -49,6 +49,7 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
         axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
         if (CAM != None):
             axes[i + 3].imshow(field, cmap=get_cmap(title.lower())[0])
+            axes[i + 3].axis("off")
             if (len(CAM) == 1):
                 axes[i + 3].imshow(CAM[0], cmap="jet", alpha=0.6)
             else:
