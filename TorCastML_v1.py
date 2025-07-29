@@ -13,15 +13,15 @@ def input_head():
         NN.Conv2d(16, 32, kernel_size=3, padding=1),
         NN.BatchNorm2d(32),
         NN.ReLU(True),
-
-        NN.Conv2d(32, 64, kernel_size=3, padding=1),
-        NN.BatchNorm2d(64),
-        NN.ReLU(True),
     )
 
 #shared learning, merges the three input heads
 def shared_segment():
     return NN.Sequential(
+        NN.Conv2d(32, 64, kernel_size=3, padding=1),
+        NN.BatchNorm2d(64),
+        NN.ReLU(True),
+        
         NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(128),
         NN.ReLU(True),
