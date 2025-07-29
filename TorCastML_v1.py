@@ -12,10 +12,12 @@ def input_head():
         NN.Conv2d(INPUT_CHANNELS, 32, kernel_size=3, padding=1),
         NN.BatchNorm2d(32),
         NN.ReLU(True),
+        NN.MaxPool2d(2),
 
         NN.Conv2d(32, 64, kernel_size=3, padding=1),
         NN.BatchNorm2d(64),
         NN.ReLU(True),
+        NN.MaxPool2d(2)
     )
 
 #shared learning, merges the three input heads
