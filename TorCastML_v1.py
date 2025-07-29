@@ -19,7 +19,7 @@ def input_head():
 def shared_segment():
     return NN.Sequential(
         NN.Conv2d(32 * INPUT_TYPES, 128, kernel_size=3, padding=1),
-        NN.BatchNorm2d(64),
+        NN.BatchNorm2d(128),
         NN.ReLU(True),
 
         NN.Conv2d(128, 128, kernel_size=3, padding=1, stride=2),
