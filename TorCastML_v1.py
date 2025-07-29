@@ -23,11 +23,11 @@ def input_head():
 #shared learning, merges the three input heads
 def shared_segment():
     return NN.Sequential(
-        NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=1),
+        NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(128),
         NN.ReLU(True),
 
-        NN.Conv2d(128, 256, kernel_size=3, padding=1),
+        NN.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(256),
         NN.ReLU(True),
 
@@ -40,7 +40,7 @@ def fc_segment():
 
         NN.Linear(256, 128),
         NN.ReLU(True),
-        NN.Dropout(0.3),
+        NN.Dropout(0.2),
 
         NN.Linear(128, 64),
         NN.ReLU(True),

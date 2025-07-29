@@ -14,17 +14,15 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
         gradients = []
         for head in target_heads:
             target_layers.append(next(layer for layer in reversed(getattr(standard_torcast_model, head)) if isinstance(layer, torch.nn.Conv2d))) #gets final conv layer in head
-            activations.append([])
-            gradients.append([])
 
 
         for i in range(len(target_layers)):
             layer = target_layers[i]
             def forward_hook(module, input, output):
-                activations[i] = output.detach()
+                activations.append(output.detach())
             
             def backward_hook(module, input, output):
-                gradients[i] = output[0].detach()
+                gradients.append(output[0].detach())
 
             layer.register_forward_hook(forward_hook)
             layer.register_full_backward_hook(backward_hook)
@@ -47,6 +45,7 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
         cams = []
 
         for i in range(len(gradients)):
+            print(gradients)
             grad = gradients[i]
             acts = activations[i]
 

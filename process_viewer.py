@@ -18,7 +18,7 @@ load_dotenv()
 #
 #"train/2019/WRN_190503_012809_KDFX_1081987n_C5.nc" - strong looking weak tor
 #"test/2015/TOR_151223_230807_KNQA_610239_P2.nc" - clear ef4
-#
+#"train/2014/TOR_140616_205305_KOAX_514013_F3.nc" - upside down ef4
 #
 #
 #
@@ -27,8 +27,8 @@ load_dotenv()
 #
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/bespoke/e20-TorCastML_v2.pt"
-SAMPLE = None
+MODEL_PATH = "./saved_models/bespoke/e2-TorCastML_v1.pt"
+SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 #==============================================================================================
 
@@ -46,16 +46,20 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
         figure.text(0.5, 0.1, f"Tornado probability:{torprob * 100: .0f}%, intensity probs: {ef_string}", fontsize=15, ha="center")
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
     for i, (title, field) in enumerate(fields):
-        axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
         if (CAM != None):
-            axes[i + 3].imshow(field, cmap=get_cmap(title.lower())[0])
-            axes[i + 3].axis("off")
+            axes[0][i].imshow(field, cmap=get_cmap(title.lower())[0])
+            axes[0][i].set_title(title, fontsize=15)
+            axes[0][i].axis("off")
+            axes[1][i].imshow(field, cmap=get_cmap(title.lower())[0])
+            axes[1][i].axis("off")
             if (len(CAM) == 1):
-                axes[i + 3].imshow(CAM[0], cmap="jet", alpha=0.6)
+                axes[1][i].imshow(CAM[0], cmap="jet", alpha=0.5)
             else:
-                axes[i + 3].imshow(CAM[i], cmap="jet", alpha=0.6)
-        axes[i].set_title(title, fontsize=15)
-        axes[i].axis("off")
+                axes[1][i].imshow(CAM[i], cmap="jet", alpha=0.5)
+        else:
+            axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
+            axes[i].set_title(title, fontsize=15)
+            axes[i].axis("off")
 
         if (MASK != None):
             axes[i].imshow(MASK.squeeze(0), cmap="Purples", alpha=0.3, interpolation="nearest")
@@ -111,6 +115,9 @@ if __name__ == "__main__":
     title = "Reduced to DBZ threshold"
     DBZ, VEL, RHOHV = reduce_to_dbz_threshold(DBZ, VEL, RHOHV)
     plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
+    DBZ_ = DBZ
+    VEL_ = VEL
+    RHOHV_ = RHOHV
 
     title = "Smoothed velocity spikes"
     VEL = detect_and_smooth_spikes(VEL)
@@ -145,8 +152,11 @@ if __name__ == "__main__":
         stack = stack.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, stack=stack, with_grad=True)
     else:
+        DBZ = torch.cat([DBZ, MASK], dim=0)
+        VEL = torch.cat([VEL, MASK], dim=0)
+        RHOHV = torch.cat([RHOHV, MASK], dim=0)
         DBZ = DBZ.unsqueeze(0)
         VEL = VEL.unsqueeze(0)
         RHOHV = RHOHV.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
-    plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM, torprob=TOR_PROB, ef_probs=CLASS_PROBS)
+    plot_images(DBZ_, VEL_, RHOHV_, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM, torprob=TOR_PROB, ef_probs=CLASS_PROBS)
