@@ -45,7 +45,6 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
         cams = []
 
         for i in range(len(gradients)):
-            print(gradients)
             grad = gradients[i]
             acts = activations[i]
 
