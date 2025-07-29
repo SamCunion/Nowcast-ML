@@ -9,20 +9,19 @@ CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 #defines the input segments of the NN
 def input_head():
     return NN.Sequential(
-        NN.Conv2d(INPUT_CHANNELS, 16, kernel_size=3, padding=1),
-        NN.Conv2d(16, 32, kernel_size=3, padding=1),
+        NN.Conv2d(INPUT_CHANNELS, 32, kernel_size=3, padding=1),
         NN.BatchNorm2d(32),
+        NN.ReLU(True),
+
+        NN.Conv2d(32, 64, kernel_size=3, padding=1),
+        NN.BatchNorm2d(64),
         NN.ReLU(True),
     )
 
 #shared learning, merges the three input heads
 def shared_segment():
     return NN.Sequential(
-        NN.Conv2d(32 * INPUT_TYPES, 128, kernel_size=3, padding=1),
-        NN.BatchNorm2d(128),
-        NN.ReLU(True),
-
-        NN.Conv2d(128, 128, kernel_size=3, padding=1, stride=2),
+        NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(128),
         NN.ReLU(True),
 
