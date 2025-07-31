@@ -19,7 +19,7 @@ load_dotenv()
 #"train/2019/WRN_190503_012809_KDFX_1081987n_C5.nc" - strong looking weak tor
 #"test/2015/TOR_151223_230807_KNQA_610239_P2.nc" - clear ef4
 #"train/2014/TOR_140616_205305_KOAX_514013_F3.nc" - upside down ef4
-#
+#"train/2018/NUL_180922_013234_KPBZ_786223s_C3.nc" - 100 nontor
 #
 #
 #
@@ -27,8 +27,8 @@ load_dotenv()
 #
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/bespoke/e2-TorCastML_v1.pt"
-SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
+MODEL_PATH = "./saved_models/bespoke/e40-TorCastML_v2.pt"
+SAMPLE = None#"train/2014/TOR_140616_205305_KOAX_514013_F3.nc"
 
 #==============================================================================================
 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
 
     if (SAMPLE == None): #get random sample for viewing
-        random_item = catalogue.sample(n=1)
+        random_item = catalogue.loc[catalogue["type"] == "test"].sample(n=1)
         filename = random_item["filename"].values[0]
         if os.path.exists(DATASET_PATH + "/" + filename):
             SAMPLE = filename
