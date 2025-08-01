@@ -55,9 +55,11 @@ with torch.no_grad():
         BATCH_RHOHV = batch["RHOHV"][...,0]
         BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
+        BATCH_CATEGORY=  batch["category"].squeeze().long()
         SPLIT_STACK = []
         SPLIT_LABEL = []
         SPLIT_EF = []
+        SPLIT_CATEGORY = []
 
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
@@ -65,6 +67,7 @@ with torch.no_grad():
             rhohv_data = BATCH_RHOHV[i] #individual rhohv input
             label_data = BATCH_LABEL[i] #individual label
             ef_data = BATCH_EF[i] #individual ef number
+            cat_data = BATCH_CATEGORY[i] #individual category label
 
             matrices = preprocessing_pipeline(dbz_data, vel_data, rhohv_data)
             if (isinstance(matrices, bool) and matrices == False):
@@ -77,12 +80,14 @@ with torch.no_grad():
             SPLIT_STACK.append(STACK)
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
+            SPLIT_CATEGORY.append(cat_data)
         
         
         #merge batch again
         INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
         labels = [val.item() for val in SPLIT_LABEL]
         ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
+        categories = [int(val.item()) for val in SPLIT_CATEGORY]
 
         prob, class_logits = model(INPUT_STACK)
 
@@ -95,6 +100,28 @@ with torch.no_grad():
         batch_strength_predictions = torch.argmax(batch_strength_probs, dim=1).cpu().numpy()
         tor_strength_predictions.extend(batch_strength_predictions)
         tor_strength_truths.extend(ef_numbers) #+1 because we're converting -1 - 5 to 0 - 6 indexes
+
+        #nuanced results
+        total_null = 0
+        correct_null = 0
+        total_warned = 0
+        correct_warned = 0
+        total_confirmed = 0
+        correct_confirmed = 0
+
+        for category, probability in zip(categories, tor_prob_predictions):
+            if (category == 0):
+                total_null += 1
+                if (probability > 0.3):
+                    correct_null += 1
+            elif (category == 1):
+                total_confirmed += 1
+                if (probability > 0.7):
+                    correct_confirmed += 1
+            elif (category == 2):
+                total_warned += 1
+                if (0.3 <= probability <= 0.7):
+                    correct_warned += 1
 
         #update visual
         batches_trained += 1
@@ -148,4 +175,9 @@ for i in range(7):
 print("Regular Tornado Predictions: " + str(reg_pred) + "/" + str(reg_tot))
 print("Significant Tornado Predictions: " + str(sig_pred) + "/" + str(sig_tot))
 print("-----------------------------")
+print("Nuanced Statistics:")
+print("Acceptable Null: " + str(correct_null) + "/" + str(total_null))
+print("Acceptable Warned: " + str(correct_warned) + "/" + str(total_warned))
+print("Acceptable Confirmed: " + str(correct_confirmed) + "/" + str(total_confirmed))
+
 print("\nTesting completed!")
