@@ -20,14 +20,15 @@ load_dotenv()
 #"test/2015/TOR_151223_230807_KNQA_610239_P2.nc" - clear ef4
 #"train/2014/TOR_140616_205305_KOAX_514013_F3.nc" - upside down ef4
 #"train/2018/NUL_180922_013234_KPBZ_786223s_C3.nc" - 100 nontor
-#
-#
+#"test/2021/TOR_210518_235149_KEWX_961432_I6.nc" - clear ef1
+#"test/2016/NUL_160605_215408_KDIX_628932s_A9.nc" - boundary struggler
+#"test/2015/WRN_151024_203518_KHGX_1076107n_J5.nc" - tropical system based
 #
 #
 #
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/bespoke/e40-TorCastML_v2.pt"
+MODEL_PATH = "./saved_models/TorCast_v2.pt"
 SAMPLE = None#"train/2014/TOR_140616_205305_KOAX_514013_F3.nc"
 
 #==============================================================================================
