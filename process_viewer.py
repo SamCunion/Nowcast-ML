@@ -23,13 +23,13 @@ load_dotenv()
 #"test/2021/TOR_210518_235149_KEWX_961432_I6.nc" - clear ef1
 #"test/2016/NUL_160605_215408_KDIX_628932s_A9.nc" - boundary struggler
 #"test/2015/WRN_151024_203518_KHGX_1076107n_J5.nc" - tropical system based
-#
-#
+#"test/2015/TOR_151223_222824_KNQA_610235_L5.nc" - reeeeal classic example
+#"test/2017/TOR_170228_221354_KDVN_678119_Z0.nc" - good f1 sample
 #
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/TorCast_v2.pt"
-SAMPLE = None#"train/2014/TOR_140616_205305_KOAX_514013_F3.nc"
+MODEL_PATH = "./saved_models/TorCast_v1_(55e).pt"
+SAMPLE = None#"test/2015/TOR_151223_222824_KNQA_610235_L5.nc"
 
 #==============================================================================================
 

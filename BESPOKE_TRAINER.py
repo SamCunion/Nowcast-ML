@@ -55,7 +55,7 @@ def main_task(start_epoch, model_name, model):
         epoch_end_time = time.time()
         epoch_duration = epoch_end_time - epoch_start_time
 
-        acc, prec, rec, f1, qk, tp, fp, tn, fn,  = do_test(model, test_data_loader, DEVICE)
+        acc, prec, rec, f1, qk, tp, fp, tn, fn = do_test(model, test_data_loader, DEVICE)
         accs.append(acc)
         precs.append(prec)
         recs.append(rec)
@@ -110,17 +110,17 @@ def do_epoch(model, data_loader, device, optimizer, loss_prob, loss_classifier):
             
             #FOR v1
             #combine proessed matrices with mask
-            #MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
-            #MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
-            #MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
-            #SPLIT_DBZ.append(MASKED_DBZ)
-            #SPLIT_VEL.append(MASKED_VEL)
-            #SPLIT_RHOHV.append(MASKED_RHOHV)
+            MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
+            MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
+            MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+            SPLIT_DBZ.append(MASKED_DBZ)
+            SPLIT_VEL.append(MASKED_VEL)
+            SPLIT_RHOHV.append(MASKED_RHOHV)
 
             ##FOR v2:
             #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
-            STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
-            SPLIT_STACK.append(STACK)
+            #STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
+            #SPLIT_STACK.append(STACK)
 
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
@@ -129,12 +129,12 @@ def do_epoch(model, data_loader, device, optimizer, loss_prob, loss_classifier):
         
         #merge batch again
         #FOR v1:
-        #DBZ = torch.stack(SPLIT_DBZ, dim=0).to(device)
-        #VEL = torch.stack(SPLIT_VEL, dim=0).to(device)
-        #RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(device)
+        DBZ = torch.stack(SPLIT_DBZ, dim=0).to(device)
+        VEL = torch.stack(SPLIT_VEL, dim=0).to(device)
+        RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(device)
 
         ##FOR v2:
-        INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
+        #INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
 
         LABELS = torch.stack(SPLIT_LABEL).to(device)
         EF_NUMBERS = torch.stack(SPLIT_EF).to(device)
@@ -143,7 +143,7 @@ def do_epoch(model, data_loader, device, optimizer, loss_prob, loss_classifier):
         optimizer.zero_grad()
 
         #change inputs depending on v1 or v2
-        prob, class_logits = model(INPUT_STACK)
+        prob, class_logits = model(DBZ, VEL, RHOHV)
         
         
         #classifier truth
@@ -209,17 +209,17 @@ def do_test(model, data_loader, device):
 
                 #FOR v1
                 #combine proessed matrices with mask
-                #MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
-                #MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
-                #MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
-                #SPLIT_DBZ.append(MASKED_DBZ)
-                #SPLIT_VEL.append(MASKED_VEL)
-                #SPLIT_RHOHV.append(MASKED_RHOHV)
+                MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
+                MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
+                MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+                SPLIT_DBZ.append(MASKED_DBZ)
+                SPLIT_VEL.append(MASKED_VEL)
+                SPLIT_RHOHV.append(MASKED_RHOHV)
 
                 ##FOR v2:
                 #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
-                STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
-                SPLIT_STACK.append(STACK)
+                #STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
+                #SPLIT_STACK.append(STACK)
 
                 SPLIT_LABEL.append(label_data)
                 SPLIT_EF.append(ef_data)
@@ -227,18 +227,18 @@ def do_test(model, data_loader, device):
 
             #merge batch again
             #FOR v1:
-            #DBZ = torch.stack(SPLIT_DBZ, dim=0).to(device)
-            #VEL = torch.stack(SPLIT_VEL, dim=0).to(device)
-            #RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(device)
+            DBZ = torch.stack(SPLIT_DBZ, dim=0).to(device)
+            VEL = torch.stack(SPLIT_VEL, dim=0).to(device)
+            RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(device)
 
             ##FOR v2:
-            INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
+            #INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
 
             labels = [val.item() for val in SPLIT_LABEL]
             ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
 
             #change inputs depending on v1 or v2
-            prob, class_logits = model(INPUT_STACK)
+            prob, class_logits = model(DBZ, VEL, RHOHV)
 
             batch_tor_probs = torch.sigmoid(prob)
             batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).int().view(-1).cpu().numpy()

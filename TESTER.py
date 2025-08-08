@@ -40,6 +40,8 @@ tor_prob_predictions = []
 tor_prob_truths = []
 tor_strength_predictions = []
 tor_strength_truths = []
+sample_categories = []
+percentages = []
 
 no_batches = len(data_loader)
 batches_trained = 0
@@ -55,11 +57,14 @@ with torch.no_grad():
         BATCH_RHOHV = batch["RHOHV"][...,0]
         BATCH_LABEL = batch["label"].squeeze().float()
         BATCH_EF = batch["ef_number"].squeeze().long()
-        BATCH_CATEGORY=  batch["category"].squeeze().long()
+        BATCH_CATEGORY = batch["category"].squeeze().long()
         SPLIT_STACK = []
+        SPLIT_DBZ = []
+        SPLIT_VEL = []
+        SPLIT_RHOHV = []
         SPLIT_LABEL = []
-        SPLIT_EF = []
         SPLIT_CATEGORY = []
+        SPLIT_EF = []
 
         for i in range(0, batch_size): #preprocess this item
             dbz_data = BATCH_DBZ[i] #individual dbz input
@@ -74,54 +79,53 @@ with torch.no_grad():
                 #invalid, just skip this item in the batch
                 continue
 
-             #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
-            STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
+            #FOR v1
+            #combine proessed matrices with mask
+            MASKED_DBZ = torch.cat([matrices[0], matrices[3]], dim=0)
+            MASKED_VEL = torch.cat([matrices[1], matrices[3]], dim=0)
+            MASKED_RHOHV = torch.cat([matrices[2], matrices[3]], dim=0)
+            SPLIT_DBZ.append(MASKED_DBZ)
+            SPLIT_VEL.append(MASKED_VEL)
+            SPLIT_RHOHV.append(MASKED_RHOHV)
 
-            SPLIT_STACK.append(STACK)
+            ##FOR v2:
+            #combine scans with the mask to create the stack (DBZ, VEL, RHOHV, MASK)
+            #STACK = torch.cat([matrices[0], matrices[1], matrices[2], matrices[3]], dim=0)
+            #SPLIT_STACK.append(STACK)
+
+
             SPLIT_LABEL.append(label_data)
             SPLIT_EF.append(ef_data)
             SPLIT_CATEGORY.append(cat_data)
         
         
         #merge batch again
-        INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
+        #FOR v1:
+        DBZ = torch.stack(SPLIT_DBZ, dim=0).to(DEVICE)
+        VEL = torch.stack(SPLIT_VEL, dim=0).to(DEVICE)
+        RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(DEVICE)
+
+        ##FOR v2:
+        #INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
+
         labels = [val.item() for val in SPLIT_LABEL]
         ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
         categories = [int(val.item()) for val in SPLIT_CATEGORY]
 
-        prob, class_logits = model(INPUT_STACK)
+        prob, class_logits = model(DBZ, VEL, RHOHV)
 
         batch_tor_probs = torch.sigmoid(prob)
         batch_tor_predictions = (batch_tor_probs > TORNADO_PROBABILITY_THRESHOLD).int().view(-1).cpu().numpy()
         tor_prob_predictions.extend(batch_tor_predictions)
         tor_prob_truths.extend(labels)
+        sample_categories.extend(categories)
+        percentages.extend(batch_tor_probs)
 
         batch_strength_probs = torch.softmax(class_logits, dim=1)
         batch_strength_predictions = torch.argmax(batch_strength_probs, dim=1).cpu().numpy()
         tor_strength_predictions.extend(batch_strength_predictions)
         tor_strength_truths.extend(ef_numbers) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
-        #nuanced results
-        total_null = 0
-        correct_null = 0
-        total_warned = 0
-        correct_warned = 0
-        total_confirmed = 0
-        correct_confirmed = 0
-
-        for category, probability in zip(categories, tor_prob_predictions):
-            if (category == 0):
-                total_null += 1
-                if (probability > 0.3):
-                    correct_null += 1
-            elif (category == 1):
-                total_confirmed += 1
-                if (probability > 0.7):
-                    correct_confirmed += 1
-            elif (category == 2):
-                total_warned += 1
-                if (0.3 <= probability <= 0.7):
-                    correct_warned += 1
 
         #update visual
         batches_trained += 1
@@ -142,6 +146,28 @@ true_negatives, false_positives, false_negatives, true_positives = metrics.confu
 quad_kappa = metrics.cohen_kappa_score(tor_strength_truths, tor_strength_predictions, weights="quadratic")
 summed_truths = Counter(tor_strength_truths)
 summed_preds = Counter(tor_strength_predictions)
+
+#nuanced metrics
+#nuanced results
+total_null = 0
+correct_null = 0
+total_warned = 0
+correct_warned = 0
+total_confirmed = 0
+correct_confirmed = 0
+for category, probability in zip(sample_categories, percentages):
+    if (category == 1):
+        total_null += 1
+        if (probability < 0.3):
+            correct_null += 1
+    elif (category == 0):
+        total_confirmed += 1
+        if (probability > 0.6):
+            correct_confirmed += 1
+    elif (category == 2):
+        total_warned += 1
+        if (0.2 <= probability):
+            correct_warned += 1
 
 
 #output
