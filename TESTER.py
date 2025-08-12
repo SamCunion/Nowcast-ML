@@ -1,6 +1,7 @@
 #tester tests a pretrained model with test data
 
 import torch
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 from load_dataset import get_torcast_dataloader
@@ -106,7 +107,7 @@ with torch.no_grad():
         RHOHV = torch.stack(SPLIT_RHOHV, dim=0).to(DEVICE)
 
         ##FOR v2:
-        #INPUT_STACK = torch.stack(SPLIT_STACK).to(device)
+        #INPUT_STACK = torch.stack(SPLIT_STACK).to(DEVICE)
 
         labels = [val.item() for val in SPLIT_LABEL]
         ef_numbers = [int(val.item()) + 1 for val in SPLIT_EF]
@@ -136,11 +137,12 @@ with torch.no_grad():
 print("Calculating evaluation metrics...")
 
 #tornado probability evaluation
-accuracy = metrics.accuracy_score(tor_prob_predictions, tor_prob_truths)
-precision = metrics.precision_score(tor_prob_predictions, tor_prob_truths)
-recall = metrics.recall_score(tor_prob_predictions, tor_prob_truths)
-f1 = metrics.f1_score(tor_prob_predictions, tor_prob_truths)
+accuracy = metrics.accuracy_score(tor_prob_truths, tor_prob_predictions)
+precision = metrics.precision_score(tor_prob_truths, tor_prob_predictions)
+recall = metrics.recall_score(tor_prob_truths, tor_prob_predictions)
+f1 = metrics.f1_score(tor_prob_truths, tor_prob_predictions)
 true_negatives, false_positives, false_negatives, true_positives = metrics.confusion_matrix(tor_prob_predictions, tor_prob_truths).ravel()
+AUC = metrics.roc_auc_score(tor_prob_truths, tor_prob_predictions)
 
 #tornado intensity evaluation
 quad_kappa = metrics.cohen_kappa_score(tor_strength_truths, tor_strength_predictions, weights="quadratic")
@@ -169,6 +171,15 @@ for category, probability in zip(sample_categories, percentages):
         if (0.2 <= probability):
             correct_warned += 1
 
+#temp histogram plotter
+#MODEL_NAME = "TorCast_v2"
+#plt.figure(figsize=(8, 5))
+#plt.hist(torch.cat(percentages).view(-1).detach().cpu().numpy(), bins=100, range=(0, 1), color="skyblue", edgecolor="black", density=True)
+#plt.title("Distribution of " + MODEL_NAME + " predictions")
+#plt.xlabel("Prediction")
+#plt.ylabel("Density")
+#plt.show()
+
 
 #output
 print("\n\n-----------------------------")
@@ -179,6 +190,7 @@ print("Accuracy: " + str(accuracy))
 print("Precision: " + str(precision))
 print("Recall: " + str(recall))
 print("F1: " + str(f1))
+print("AUC: " + str(AUC))
 print("\nTrue Positives: " + str(true_positives))
 print("False Positives: " + str(false_positives))
 print("True Negatives: " + str(true_negatives))

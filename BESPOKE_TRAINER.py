@@ -251,10 +251,10 @@ def do_test(model, data_loader, device):
             tor_strength_truths.extend(ef_numbers) #+1 because we're converting -1 - 5 to 0 - 6 indexes
 
     #tornado probability evaluation
-    accuracy = metrics.accuracy_score(tor_prob_predictions, tor_prob_truths)
-    precision = metrics.precision_score(tor_prob_predictions, tor_prob_truths)
-    recall = metrics.recall_score(tor_prob_predictions, tor_prob_truths)
-    f1 = metrics.f1_score(tor_prob_predictions, tor_prob_truths)
+    accuracy = metrics.accuracy_score(tor_prob_truths, tor_prob_predictions)
+    precision = metrics.precision_score(tor_prob_truths, tor_prob_predictions)
+    recall = metrics.recall_score(tor_prob_truths, tor_prob_predictions)
+    f1 = metrics.f1_score(tor_prob_truths, tor_prob_predictions)
     true_negatives, false_positives, false_negatives, true_positives = metrics.confusion_matrix(tor_prob_predictions, tor_prob_truths).ravel()
 
     #tornado intensity evaluation
