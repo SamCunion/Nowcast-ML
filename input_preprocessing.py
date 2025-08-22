@@ -1,9 +1,4 @@
 #TorCastML input preprocessing library
-#TODO:
-#
-#identify velocity gates function
-#shrink matrices to 50x50 around point function
-#rotate matrice around true north instead of radar direction?
 
 import torch
 import scipy
@@ -31,7 +26,7 @@ def detect_and_smooth_spikes(VEL):
     nand = torch.nan_to_num(new_vel, nan=0.0)
     height, width = new_vel.shape
     
-    #pad so edges work
+    #pad so edges work (makes 4 dimensions, then squeezes back to 2)
     padded = torch.nn.functional.pad(nand.unsqueeze(0).unsqueeze(0), (1, 1, 1, 1), mode="replicate").squeeze()
 
     #non-absolute neighbour values
@@ -61,26 +56,33 @@ def remove_extreme_artefacts(VEL):
     new_vel[abs(new_vel) >= 64.0] = float("nan")
     return new_vel
 
-#interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value
+#interpolates velocity data to fill in holes where the corresponding DBZ is greater than a value. Requires DBZ and VEL input, sigma influences the size of the smoothing kernel
 def interpolate_velocity_noise(DBZ, VEL, SIGMA=3.0):
+    #TODO: improve where DBZ is NaN, then the VEL isnt taken into consideration for smoothing
     device = VEL.device
     #mask where velocity is NAN and DBZ exists
     mask = torch.isnan(VEL) & ~torch.isnan(DBZ)
     #nan removed velocity for smoothing purposes
     filled_vel = torch.nan_to_num(VEL, nan=0.0)
 
-    #gaussian kernel, for convolution in 2 dimensions
+    #gets integer of kernel size
     kernel_size = int(6 * SIGMA + 1)
+    #1d kernel
     coords = torch.arange(kernel_size, dtype=torch.float32, device=device) - kernel_size // 2
+    #apply gaussian formula
     gaussian = torch.exp(-0.5 * (coords / SIGMA)**2)
+    #convert to 2d kernel
     kernel = (gaussian[:, None] @ gaussian[None, :])
+    #normalise
     kernel /= kernel.sum()
+    #convert to appropriate format for conv2d function
     kernel = kernel.view(1, 1, kernel_size, kernel_size)
 
     #performs convolution on the velocity to smooth
     smoothed_velocity = torch.nn.functional.conv2d(filled_vel, kernel, padding=kernel_size // 2)
 
     out = VEL.clone()
+    #replaces only missing velocity values with the new smoothed values, leaving existing values unchanged
     out[0][mask[0]] = smoothed_velocity.squeeze(0)[mask[0]]
     return out
 
