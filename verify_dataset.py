@@ -1,7 +1,6 @@
-#Ensures that all .nc files are accounted for in the dataset, according to the catalogue
+#Loops through the catalogue, and ensures that every sample is accounted for. Detects samples referenced by the catalogue that do not exist within the downloaded dataset.
 
 import os
-import sys
 import pandas as pd
 from dotenv import load_dotenv
 load_dotenv()
@@ -10,17 +9,17 @@ load_dotenv()
 DATASET_PATH = os.getenv("DATASET_PATH")
 
 print("Loading catalogue...")
-catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
+catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv") #reads catalogue into pandas dataframe
 print("Checking " + str(catalogue.shape[0]) + " items")
 print("Checking integrity of dataset...")
 
 success = 0
 
 for index, item in catalogue.iterrows():
-    filename = item["filename"]
-    if os.path.exists(DATASET_PATH + "/" + filename):
+    filename = item["filename"] #gets filename of sample
+    if os.path.exists(DATASET_PATH + "/" + filename): #sample exists
         success += 1
-    else:
+    else: #sample does not exist
         print("Unable to find file: " + filename)
 
 print("Successfully found " + str(success) + " items")

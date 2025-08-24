@@ -1,9 +1,7 @@
 #select a netcdf file, takes you through the pipeline and shows the output with a given model.
 #if no netcdf selected (None), chooses a random item
 import torch
-#import scipy
 import numpy as np
-import math
 import pandas as pd
 import os
 import matplotlib.pyplot as plt
@@ -26,43 +24,44 @@ load_dotenv()
 #"test/2015/TOR_151223_222824_KNQA_610235_L5.nc" - reeeeal classic example
 #"test/2017/TOR_170228_221354_KDVN_678119_Z0.nc" - good f1 sample
 #
+
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
 MODEL_PATH = "./saved_models/TorCast_v2_(60e).pt"
 SAMPLE = "test/2016/NUL_160605_220504_KDIX_628932s_Y9.nc"
 
 #==============================================================================================
-
+#plots the given matrices with matplotlib
 def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id, MASK=None, CAM=None, torprob=None, ef_probs=None):
-    if (CAM != None):
+    if (CAM != None): #if gradcam provided, add an extra layer of images for the comparison
         figure, axes = plt.subplots(2, 3, figsize=(15, 5))
     else:
         figure, axes = plt.subplots(1, 3, figsize=(15, 5))
     figure.suptitle(title, fontsize=20)
     figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=15, ha="center")
-    if (torprob != None):
+    if (torprob != None): #if probability info is given, add an extra line of text for metadata
         #format intensity
         ef_probs *= 100
         ef_string = f"Nontor: {ef_probs[0] :.0f}% EF-0: {ef_probs[1] :.0f}% EF-1: {ef_probs[2] :.0f}% EF-2: {ef_probs[3] :.0f}% EF-3: {ef_probs[4] :.0f}% EF-4: {ef_probs[5] :.0f}% EF-5: {ef_probs[6] :.0f}%"
         figure.text(0.5, 0.1, f"Tornado probability:{torprob * 100: .0f}%, intensity probs: {ef_string}", fontsize=15, ha="center")
-    fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))]
+    fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))] #collect DBZ,VEl,RHOHV matrices
     for i, (title, field) in enumerate(fields):
-        if (CAM != None):
+        if (CAM != None): #if gradcam provided, add the extra layer for comparison
             axes[0][i].imshow(field, cmap=get_cmap(title.lower())[0])
             axes[0][i].set_title(title, fontsize=15)
             axes[0][i].axis("off")
             axes[1][i].imshow(field, cmap=get_cmap(title.lower())[0])
             axes[1][i].axis("off")
-            if (len(CAM) == 1):
+            if (len(CAM) == 1): #only one provided, probably using tornet 2
                 axes[1][i].imshow(CAM[0], cmap="jet", alpha=0.5)
-            else:
+            else: #tornet 1, provides 3 separate gradcams
                 axes[1][i].imshow(CAM[i], cmap="jet", alpha=0.5)
         else:
             axes[i].imshow(field, cmap=get_cmap(title.lower())[0])
             axes[i].set_title(title, fontsize=15)
             axes[i].axis("off")
 
-        if (MASK != None):
+        if (MASK != None): #if mask exists, overlay it on the images
             axes[i].imshow(MASK.squeeze(0), cmap="Purples", alpha=0.3, interpolation="nearest")
         
     plt.tight_layout(rect=[0, 0.3, 1, 0.95])
@@ -70,20 +69,21 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
 
 
 if __name__ == "__main__":
-    catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv")
-    model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu")
+    catalogue = pd.read_csv(DATASET_PATH + "/catalog.csv") #reads the tornet catalogue
+    model = torch.load(MODEL_PATH, weights_only=False, map_location="cpu") #loads the model selected as a hyperparameter
 
     if (SAMPLE == None): #get random sample for viewing
         random_item = catalogue.loc[catalogue["type"] == "test"].sample(n=1)
         filename = random_item["filename"].values[0]
         if os.path.exists(DATASET_PATH + "/" + filename):
             SAMPLE = filename
-        else:
+        else: #failsafe in case item doesnt exist
             print("Unable to find file: " + filename)
             exit()
     
     print("Specimen: " + SAMPLE)
-    cdf_file = read_file(DATASET_PATH + "/" + SAMPLE)
+    cdf_file = read_file(DATASET_PATH + "/" + SAMPLE) #read the netcdf file
+    #extract relevant information from the netcdf file
     catalogue_item = catalogue.loc[catalogue["filename"] == SAMPLE]
     catalogue_item = catalogue_item.to_numpy()[0]
     ef_number = str(catalogue_item[8])
@@ -91,17 +91,16 @@ if __name__ == "__main__":
     timestamp = catalogue_item[1]
     radar_id = catalogue_item[7]
 
+    #get the lowest tilt, final frame DBZ, VEL, RHOHV scans
     DBZ = cdf_file["DBZ"][0][:, :, 1]
     VEL = cdf_file["VEL"][0][:, :, 1]
     RHOHV = cdf_file["RHOHV"][0][:, :, 1]
-    #convert inputs
+    #convert input matrices to tensors
     DBZ = torch.from_numpy(DBZ).unsqueeze(0)
     VEL = torch.from_numpy(VEL).unsqueeze(0)
     RHOHV = torch.from_numpy(RHOHV).unsqueeze(0)
     MASK = None
     CAM = None
-    #shape: (120, 240)
-
 
     #PREPROCESSING PIPELINE
 
@@ -142,17 +141,18 @@ if __name__ == "__main__":
     RHOHV = normalise_input("RHOHV", RHOHV)
     plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar_id)
 
+    #have one of the matrices been rejected during preprocessing?
     if ((isinstance(DBZ, bool) and DBZ == False) or (isinstance(VEL, bool) and VEL == False) or (isinstance(RHOHV, bool) and RHOHV == False)):
         print("DBZ, VEL, or RHOHV matrix rejected, most likely either extremely low DBZ across the board, or VEL only in one direction")
         exit()
 
     #build inputs
     title = "Model output and GRAD-CAM attention heatmap"
-    if (len(model.gradcam_targets) == 1): #combined head
+    if (len(model.gradcam_targets) == 1): #combined head from TorCast 2
         stack = torch.cat([DBZ, VEL, RHOHV, MASK], dim=0)
         stack = stack.unsqueeze(0)
         TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, stack=stack, with_grad=True)
-    else:
+    else: #multiple gradcam targets, indicates TorCast 1 or 0
         DBZ = torch.cat([DBZ, MASK], dim=0)
         VEL = torch.cat([VEL, MASK], dim=0)
         RHOHV = torch.cat([RHOHV, MASK], dim=0)

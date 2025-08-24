@@ -1,8 +1,9 @@
-#first deepened and finalised model definition for TorCastML architecture
+#TorCast_v1 architecture, this model feeds each input datatype separately into the model. Processes separately for a couple of layers, before being merged.
+
 import torch
 import torch.nn as NN
 
-INPUT_CHANNELS = 2 #should always be one, unless stacking input tilts (data + mask)
+INPUT_CHANNELS = 2 #radar data, attention mask
 INPUT_TYPES = 3 #DBZ, VEL, RHOHV
 CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 
@@ -45,8 +46,6 @@ def fc_segment():
 
         NN.Linear(128, 64),
         NN.ReLU(True),
-
-        
     )
 
 #tornado probability head
@@ -65,11 +64,11 @@ def intensity_head():
         NN.ReLU(True),
 
         NN.Linear(32, CLASSIFIER_CLASSES)
-        #for training, needs raw logits, can apply softmax later
     )
 
 class TorCastML_v1(NN.Module):
 
+    #specifies the variables that should be accessed for GRAD-CAM analysis
     gradcam_targets = ["DBZ_Head", "VEL_Head", "CC_Head"]
 
     def __init__(self):

@@ -1,4 +1,4 @@
-#dataset entry viewer
+#displays a visual representation of a sample, and each data type, both as a raw matrix and converted to a spatially correct sector.
 import matplotlib.pyplot as plot
 import pandas as pd
 import os
@@ -12,6 +12,7 @@ load_dotenv()
 DATASET_PATH = os.getenv("DATASET_PATH")
 PLOTS = ["DBZ", "VEL", "RHOHV"]
 
+#gets a random sample
 def get_random_entry(catalogue):
     random_item = catalogue.sample(n=1)
     filename = random_item["filename"].values[0]
@@ -22,6 +23,7 @@ def get_random_entry(catalogue):
         return get_random_entry(catalogue)
 
 
+#updates the matplotlib figure to the new sample
 def change_displayed_info(fg, entry):
     filename = entry["filename"].values[0]
     file = read_file(DATASET_PATH + "/" + filename)
@@ -34,6 +36,7 @@ def change_displayed_info(fg, entry):
 
     fg.text(.5, .05, "Batch: " + traintest + ", Type: " + type + ", EF: " + ef + ", Datetime: " + datetime, ha="center")
 
+#detects keypress, loads a new sample
 def on_keypress(e):
     if (e.key == "escape"):
         plot.close()

@@ -1,5 +1,5 @@
-#first deepened and finalised model definition for TorCastML architecture
-import torch
+#TorCast_v2 architecture, this model stacks the inputs when fed into the model. Processes combined data types for a better spatial understanding of the data.
+
 import torch.nn as NN
 
 INPUT_CHANNELS = 4 #DBZ, VEL, RHOHV, MASK
@@ -37,7 +37,6 @@ def fc_segment():
 
         NN.Linear(128, 64),
         NN.ReLU(True),
-
     )
 
 #tornado probability head
@@ -56,11 +55,11 @@ def intensity_head():
         NN.ReLU(True),
 
         NN.Linear(32, CLASSIFIER_CLASSES)
-        #for training, needs raw logits, can apply softmax later
     )
 
 class TorCastML_v2(NN.Module):
 
+    #specifies the variables that should be accessed for GRAD-CAM analysis
     gradcam_targets = ["combined_head"]
 
     def __init__(self):

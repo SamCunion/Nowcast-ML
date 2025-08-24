@@ -4,11 +4,12 @@ import numpy as np
 
 #takes loaded model, the input to the model (probably the stack [1, 4, 120, 240]), and whether to perform GRAD-CAM
 #returns probability of tornado, intensity probs sum([7]) = 1, and [Heads, 120, 240] GRAD-CAM if specified else None
+#input stack if querying torcast 2, or DBZ, VEL and RHOHV if querying torcast 0 or 1. with_grad determines if gradcam is also output
 def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=None, with_grad=False):
 
     #get apply hooks
     if (with_grad):
-        target_heads = standard_torcast_model.gradcam_targets
+        target_heads = standard_torcast_model.gradcam_targets #each model's architecture specifies their gradcam targets
         target_layers = []
         activations = []
         gradients = []
@@ -17,6 +18,7 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
 
 
         for i in range(len(target_layers)):
+            #register the hooks
             layer = target_layers[i]
             def forward_hook(module, input, output):
                 activations.append(output.detach())
@@ -30,24 +32,26 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
     standard_torcast_model.eval()
     
     if (stack != None): #stacked head input
-        prob, class_logits = standard_torcast_model(stack)
+        prob_logit, class_logits = standard_torcast_model(stack)
     else: #separate head input
-        prob, class_logits = standard_torcast_model(DBZ, VEL, RHOHV)
+        prob_logit, class_logits = standard_torcast_model(DBZ, VEL, RHOHV)
 
-    tornado_prob = torch.nn.functional.sigmoid(prob.squeeze()).detach().numpy()
+    #get outputs from both heads
+    tornado_prob = torch.nn.functional.sigmoid(prob_logit.squeeze()).detach().numpy()
     class_probs = torch.nn.functional.softmax(class_logits.squeeze(), dim=0).detach().numpy()
 
     
     if (with_grad):
-
+        
+        #backward passes from the probability head
         standard_torcast_model.zero_grad()
-        prob.backward()
+        prob_logit.backward()
         cams = []
 
         for i in range(len(gradients)):
             grad = gradients[i]
             acts = activations[i]
-
+            #performs standard grad-cam process
             weights = grad.mean(dim=(2, 3), keepdim=True)
             cam = (weights * acts).sum(dim=1, keepdim=True)
             cam = torch.relu(cam)

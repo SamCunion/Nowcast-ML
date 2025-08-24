@@ -1,16 +1,17 @@
-#initial development model definition for TorCastML architecture
+#TorCast_v0 architecture, this model was used during testing. is a lightweight model that provided feedback on early processing changes.
+#SHOULD NOT BE USED as it was replaced directly by TorCast_v1
+
 import torch
 import torch.nn as NN
 import torch.nn.functional as FUNCTIONAL
 
-INPUT_CHANNELS = 2 #should always be one, unless stacking input tilts (data + mask)
+INPUT_CHANNELS = 2 #radar data, attention mask
 INPUT_TYPES = 3 #DBZ, VEL, RHOHV
 CLASSIFIER_CLASSES = 7 # Nontor, EF0, EF1, EF2, EF3, EF4, EF5
 
-#defines the input segments of the NN
+#defines the input heads of the NN, one for each input type
 def input_head():
     return NN.Sequential(
-        #maybe bigger kernel size better?
         NN.Conv2d(INPUT_CHANNELS, 16, kernel_size=5, padding=1, stride=1),
         NN.BatchNorm2d(16),
         NN.ReLU(True),
@@ -30,9 +31,6 @@ def shared_segment():
         NN.BatchNorm2d(64),
         NN.ReLU(True),
         NN.MaxPool2d(2)
-
-        #add more?
-
     )
 
 #shared fully connected layer(s)
@@ -45,8 +43,6 @@ def fc_segment():
 
         NN.Linear(32, 32),
         NN.ReLU(True),
-
-        #add more?
     )
 
 #tornado probability head
@@ -62,8 +58,10 @@ def intensity_head():
         #for training, needs raw logits, can apply softmax later
     )
 
+#TorCast_v0 architecture
 class TorCastML_v0(NN.Module):
 
+    #specifies the variables that should be accessed for GRAD-CAM analysis
     gradcam_targets = ["DBZ_Head", "VEL_Head", "CC_Head"]
 
     def __init__(self):
@@ -80,7 +78,7 @@ class TorCastML_v0(NN.Module):
         #linearise the data
         self.linearise = NN.AdaptiveAvgPool2d((1, 1))
 
-        #FC layer
+        #FC layer(s)
         self.fc = fc_segment()
 
         #tornado probability head

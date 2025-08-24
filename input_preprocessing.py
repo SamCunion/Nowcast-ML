@@ -1,9 +1,7 @@
 #TorCastML input preprocessing library
+#Defines the behaviour of each step in the preprocessing pipeline, using only pytorch tensor operations
 
 import torch
-import scipy
-import numpy as np
-import math
 
 #removes all data where dbz is less than a threshold.
 def reduce_to_dbz_threshold(DBZ, VEL, RHOHV, DBZ_THRESHOLD=20):
@@ -86,15 +84,15 @@ def interpolate_velocity_noise(DBZ, VEL, SIGMA=3.0):
     out[0][mask[0]] = smoothed_velocity.squeeze(0)[mask[0]]
     return out
 
-#Normalises matrix values between 0,1 for DBZ, RHOHV, between -1,1 for VEL. also converts NAN to 0
+#Normalises matrix values between [0,1] for DBZ, RHOHV, between [-1,1] for VEL. also converts NAN to 0
 def normalise_input(type, matrix):
-    if (type == "DBZ"): #0,1
+    if (type == "DBZ"): #[0,1]
         #convert nans
         nansafe_matrix = torch.nan_to_num(matrix, nan=0.0)
-        #simple cast all values from max,min to 0,1
+        #simple cast all values from max,min to [0,1]
         min_val = torch.min(nansafe_matrix)
         max_val = torch.max(nansafe_matrix)
-        if (min_val == max_val):
+        if (min_val == max_val): #reject operation if min and max value are the same
             return False
         normed = (nansafe_matrix - min_val) / (max_val - min_val)
     elif (type == "RHOHV"):
@@ -102,7 +100,7 @@ def normalise_input(type, matrix):
         nansafe_matrix = torch.nan_to_num(matrix, nan=1.0)
         #clamp values between 0 and 1
         normed = torch.clamp(nansafe_matrix, 0.0, 1.0)
-    elif (type == "VEL"): #-1,1
+    elif (type == "VEL"): #[-1,1]
         #convert nans
         nansafe_matrix = torch.nan_to_num(matrix, nan=0.0)
         #get the highest wind speed (in either direction), which will be represented by -1.0 and 1.0. all values then fall between these extremes
