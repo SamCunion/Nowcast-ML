@@ -138,7 +138,7 @@ def generate_feature_mask(DBZ, VEL, RHOHV, DBZ_THRESHOLD=10):
 def find_velocity_couplets(VEL, SHEAR_THRESHOLD=35.0):
     nand_vel = torch.nan_to_num(VEL.squeeze(), nan=0.0)
     #shifts in one direction, minus shift in other direction to get couplet shear
-    shear = nand_vel[:, 1:] - nand_vel[:, :-1]
+    shear = nand_vel[1:, :] - nand_vel[:-1, :]
     strong_shear_mask = torch.abs(shear) > SHEAR_THRESHOLD
     #couplet detected where large difference between shear values, and direction
     rngs, azs = torch.where(strong_shear_mask)
