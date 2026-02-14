@@ -27,8 +27,8 @@ load_dotenv()
 
 #Hyperparams
 DATASET_PATH = os.getenv("DATASET_PATH")
-MODEL_PATH = "./saved_models/TorCast_v2_(60e).pt"
-SAMPLE = "test/2016/NUL_160605_220504_KDIX_628932s_Y9.nc"
+MODEL_PATH = "./saved_models/bespoke/e5-probs_only_no_pool.pt"
+SAMPLE = "test/2015/TOR_151223_230807_KNQA_610239_P2.nc"
 
 #==============================================================================================
 #plots the given matrices with matplotlib
@@ -41,9 +41,9 @@ def plot_images(DBZ, VEL, RHOHV, title, ef_number, sample_type, timestamp, radar
     figure.text(0.5, 0.02, f"Caption: {sample_type}, EF: {ef_number}, datetime: {timestamp}, radar: {radar_id}", fontsize=15, ha="center")
     if (torprob != None): #if probability info is given, add an extra line of text for metadata
         #format intensity
-        ef_probs *= 100
-        ef_string = f"Nontor: {ef_probs[0] :.0f}% EF-0: {ef_probs[1] :.0f}% EF-1: {ef_probs[2] :.0f}% EF-2: {ef_probs[3] :.0f}% EF-3: {ef_probs[4] :.0f}% EF-4: {ef_probs[5] :.0f}% EF-5: {ef_probs[6] :.0f}%"
-        figure.text(0.5, 0.1, f"Tornado probability:{torprob * 100: .0f}%, intensity probs: {ef_string}", fontsize=15, ha="center")
+        #ef_probs *= 100
+        #ef_string = f"Nontor: {ef_probs[0] :.0f}% EF-0: {ef_probs[1] :.0f}% EF-1: {ef_probs[2] :.0f}% EF-2: {ef_probs[3] :.0f}% EF-3: {ef_probs[4] :.0f}% EF-4: {ef_probs[5] :.0f}% EF-5: {ef_probs[6] :.0f}%"
+        figure.text(0.5, 0.1, f"Tornado probability:{torprob * 100: .0f}%", fontsize=15, ha="center")
     fields = [("DBZ", DBZ.squeeze(0)), ("VEL", VEL.squeeze(0)), ("RHOHV", RHOHV.squeeze(0))] #collect DBZ,VEl,RHOHV matrices
     for i, (title, field) in enumerate(fields):
         if (CAM != None): #if gradcam provided, add the extra layer for comparison
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     if (len(model.gradcam_targets) == 1): #combined head from TorCast 2
         stack = torch.cat([DBZ, VEL, RHOHV, MASK], dim=0)
         stack = stack.unsqueeze(0)
-        TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, stack=stack, with_grad=True)
+        TOR_PROB, CAM = Query_Model(model, stack=stack, with_grad=True)
     else: #multiple gradcam targets, indicates TorCast 1 or 0
         DBZ = torch.cat([DBZ, MASK], dim=0)
         VEL = torch.cat([VEL, MASK], dim=0)
@@ -159,5 +159,5 @@ if __name__ == "__main__":
         DBZ = DBZ.unsqueeze(0)
         VEL = VEL.unsqueeze(0)
         RHOHV = RHOHV.unsqueeze(0)
-        TOR_PROB, CLASS_PROBS, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
-    plot_images(DBZ_, VEL_, RHOHV_, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM, torprob=TOR_PROB, ef_probs=CLASS_PROBS)
+        TOR_PROB, CAM = Query_Model(model, DBZ=DBZ, VEL=VEL, RHOHV=RHOHV, with_grad=True)
+    plot_images(DBZ_, VEL_, RHOHV_, title, ef_number, sample_type, timestamp, radar_id, CAM=CAM, torprob=TOR_PROB, ef_probs=None)

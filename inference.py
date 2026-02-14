@@ -32,13 +32,12 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
     standard_torcast_model.eval()
     
     if (stack != None): #stacked head input
-        prob_logit, class_logits = standard_torcast_model(stack)
+        prob_logit = standard_torcast_model(stack)
     else: #separate head input
-        prob_logit, class_logits = standard_torcast_model(DBZ, VEL, RHOHV)
+        prob_logit = standard_torcast_model(DBZ, VEL, RHOHV)
 
     #get outputs from both heads
     tornado_prob = torch.nn.functional.sigmoid(prob_logit.squeeze()).detach().numpy()
-    class_probs = torch.nn.functional.softmax(class_logits.squeeze(), dim=0).detach().numpy()
 
     
     if (with_grad):
@@ -62,6 +61,6 @@ def Query_Model(standard_torcast_model, stack=None, DBZ=None, VEL=None, RHOHV=No
 
             cams.append(cam)
 
-        return tornado_prob, class_probs, cams
+        return tornado_prob, cams
     
-    return tornado_prob, class_probs, None
+    return tornado_prob, None

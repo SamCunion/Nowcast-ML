@@ -81,7 +81,6 @@ def do_epoch(model, data_loader, device, optimizer, loss_prob):
 
     for batch in data_loader:
         batch_size = len(batch["label"])
-        
         #PREPROCESSING
 
         #separate batch into items
