@@ -1,12 +1,13 @@
-#TorCast_v2 architecture, this model stacks the inputs when fed into the model. Processes combined data types for a better spatial understanding of the data.
+#TorCast_v1 architecture, this model feeds each input datatype separately into the model. Processes separately for a couple of layers, before being merged.
 
-import torch.nn as NN
 import torch
+import torch.nn as NN
 
-INPUT_CHANNELS = 4 #DBZ, VEL, RHOHV, MASK
+INPUT_CHANNELS = 2 #radar data, attention mask
+INPUT_TYPES = 3 #DBZ, VEL, RHOHV
 
 #defines the input segments of the NN
-def conv_layers():
+def input_head():
     return NN.Sequential(
         NN.Conv2d(INPUT_CHANNELS, 16, kernel_size=3, padding=1),
         NN.Conv2d(16, 32, kernel_size=3, padding=1),
@@ -17,9 +18,13 @@ def conv_layers():
         NN.Conv2d(32, 64, kernel_size=3, padding=1),
         NN.BatchNorm2d(64),
         NN.ReLU(True),
-        NN.MaxPool2d(2),
+        NN.MaxPool2d(2)
+    )
 
-        NN.Conv2d(64, 128, kernel_size=3, padding=1, stride=2),
+#shared learning, merges the three input heads
+def shared_segment():
+    return NN.Sequential(
+        NN.Conv2d(64 * INPUT_TYPES, 128, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(128),
         NN.ReLU(True),
         NN.MaxPool2d(2),
@@ -27,7 +32,7 @@ def conv_layers():
         NN.Conv2d(128, 256, kernel_size=3, padding=1, stride=2),
         NN.BatchNorm2d(256),
         NN.ReLU(True),
-        NN.MaxPool2d(2),
+        NN.MaxPool2d(2)
     )
 
 #shared fully connected layer(s)
@@ -44,16 +49,21 @@ def prob_head():
         NN.Linear(64, 1),
     )
 
-class TorCastML_v2_probs_only(NN.Module):
+class TorCastML_v1_probs_only(NN.Module):
 
     #specifies the variables that should be accessed for GRAD-CAM analysis
-    gradcam_targets = ["combined_head"]
+    gradcam_targets = ["DBZ_Head", "VEL_Head", "CC_Head"]
 
     def __init__(self):
         super().__init__()
 
-        #make conv layers
-        self.combined_head = conv_layers()
+        #make input heads
+        self.DBZ_Head = input_head()
+        self.VEL_Head = input_head()
+        self.CC_Head = input_head()
+
+        #shared layer(s)
+        self.shared = shared_segment()
 
         #linearise the data
         self.linearise = NN.Sequential(
@@ -69,21 +79,26 @@ class TorCastML_v2_probs_only(NN.Module):
 
     
     #forward pass through TorCast
-    def forward(self, input_stack):
-        #shape: (BATCH, 4, 120, 240)
+    def forward(self, DBZ, VEL, CC):
+        #each input is in the form (batch, 1, 240, 120)
 
-        conv_layer = self.combined_head(input_stack)
-        #shape: (BATCH, 256, 30, 60)
+        f1 = self.DBZ_Head(DBZ)
+        f2 = self.VEL_Head(VEL)
+        f3 = self.CC_Head(CC)
+        #each is now (batch, 32, 60, 30)
 
-        linear = self.linearise(conv_layer)
-        #shape: (BATCH, 256)
-
+        #merge each head's channels
+        combined_heads = torch.cat([f1, f2, f3], dim=1)
+        #shape: (batch, 96, 60, 30)
+        shared_conv = self.shared(combined_heads)
+        #shape: (batch, 64, 30, 15)
+        linear = self.linearise(shared_conv)
+        #shape: (batch, 64)
         fc = self.fc(linear)
-        #shape: (BATCH, 64)
+        #shape: (batch, 32)
 
         #output heads
         out_prob = self.tor_prob(fc) #shape: (batch, 1)
-
 
         #output
         return out_prob
